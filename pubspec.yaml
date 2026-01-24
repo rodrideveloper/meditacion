@@ -1,0 +1,51 @@
+name: meditation_app
+description: "App de meditación con alarma full-screen"
+publish_to: 'none'
+version: 1.0.1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Dependency Injection
+  get_it: ^8.0.3
+
+  # Local Storage
+  shared_preferences: ^2.3.5
+
+  # Notificaciones y Alarmas (ÚNICA LIBRERÍA)
+  flutter_local_notifications: ^18.0.1
+
+  # Timezone (requerido para zonedSchedule)
+  timezone: ^0.10.0
+  flutter_timezone: ^3.0.1
+
+  # Audio para reproducir sonido de alarma
+  just_audio: ^0.9.43
+
+  # Permisos
+  permission_handler: ^11.3.1
+
+  # Utilidades
+  dartz: ^0.10.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/sounds/
