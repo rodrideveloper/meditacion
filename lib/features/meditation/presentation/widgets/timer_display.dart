@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Widget que muestra el timer con animación circular
@@ -41,16 +42,16 @@ class TimerDisplay extends StatelessWidget {
               Text(
                 _formatTime(remaining),
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontWeight: FontWeight.w200,
-                      letterSpacing: 2,
-                    ),
+                  fontWeight: FontWeight.w200,
+                  letterSpacing: 2,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
-                'restante',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                    ),
+                S.of(context).remaining,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
               ),
             ],
           ),

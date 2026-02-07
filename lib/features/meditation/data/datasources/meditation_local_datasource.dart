@@ -23,11 +23,13 @@ class MeditationLocalDatasourceImpl implements MeditationLocalDatasource {
     final soundId =
         _prefs.getString(AppConstants.prefSelectedSound) ?? 'angelical';
     final vibration = _prefs.getBool(AppConstants.prefVibrationEnabled) ?? true;
+    final volume = _prefs.getDouble(AppConstants.prefAlarmVolume) ?? 0.8;
 
     return MeditationSettings(
       lastDurationMinutes: duration,
       selectedSoundId: soundId,
       vibrationEnabled: vibration,
+      alarmVolume: volume,
     );
   }
 
@@ -45,5 +47,6 @@ class MeditationLocalDatasourceImpl implements MeditationLocalDatasource {
       AppConstants.prefVibrationEnabled,
       settings.vibrationEnabled,
     );
+    await _prefs.setDouble(AppConstants.prefAlarmVolume, settings.alarmVolume);
   }
 }

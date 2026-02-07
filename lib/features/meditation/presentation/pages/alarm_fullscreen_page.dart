@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/sound_constants.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/services/audio_service.dart';
-import '../../../../core/services/notification_service.dart';
+import '../../../../core/services/native_alarm_service.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Página de alarma full-screen que aparece sobre el lock screen
@@ -20,7 +23,8 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
   late AnimationController _animationController;
   late Animation<double> _pulseAnimation;
   final AudioService _audioService = getIt<AudioService>();
-  final NotificationService _notificationService = getIt<NotificationService>();
+  final NativeAlarmService _nativeAlarmService = getIt<NativeAlarmService>();
+  String? _soundId;
 
   @override
   void initState() {
@@ -33,27 +37,58 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
     )..repeat(reverse: true);
 
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-
-    // Iniciar sonido de alarma
-    _startAlarmSound();
 
     // Mantener pantalla encendida
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // Iniciar sonido de alarma después del primer frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAndPlayAlarm();
+    });
+  }
+
+  Future<void> _initializeAndPlayAlarm() async {
+    // Obtener el soundId de los argumentos de la ruta
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _soundId = args?['soundId'] as String?;
+
+    debugPrint('AlarmFullScreenPage: soundId from args = $_soundId');
+
+    await _startAlarmSound();
   }
 
   Future<void> _startAlarmSound() async {
-    await _audioService.initialize();
-    await _audioService.playAlarm(MeditationSound.defaultSound);
+    try {
+      await _audioService.initialize();
+
+      // Obtener el sonido basado en soundId o usar el default
+      final sound = _soundId != null
+          ? (MeditationSound.getById(_soundId!) ?? MeditationSound.defaultSound)
+          : MeditationSound.defaultSound;
+
+      // Leer volumen configurado por el usuario
+      final prefs = getIt<SharedPreferences>();
+      final maxVolume = prefs.getDouble(AppConstants.prefAlarmVolume) ?? 0.8;
+
+      debugPrint(
+        'AlarmFullScreenPage: Playing sound ${sound.id} at volume $maxVolume',
+      );
+      await _audioService.playAlarm(sound, maxVolume: maxVolume);
+    } catch (e) {
+      debugPrint('AlarmFullScreenPage: Error playing alarm sound: $e');
+    }
   }
 
   Future<void> _stopAlarm() async {
-    await _audioService.stop();
-    await _notificationService.cancelAlarm();
+    try {
+      await _audioService.stop();
+      await _nativeAlarmService.cancelAlarm();
+    } catch (e) {
+      debugPrint('AlarmFullScreenPage: Error stopping alarm: $e');
+    }
 
     if (mounted) {
       // Restaurar UI del sistema
@@ -82,10 +117,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF1A1A2E),
-                Color(0xFF0F0F1A),
-              ],
+              colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
             ),
           ),
           child: SafeArea(
@@ -128,11 +160,11 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
 
                 // Título
                 Text(
-                  '🧘 Meditación Completada',
+                  S.of(context).meditationCompleted,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -142,11 +174,11 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: Text(
-                    'Tu sesión de meditación ha terminado.\nToma un momento para volver al presente.',
+                    S.of(context).meditationCompletedBody,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.5,
-                        ),
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -170,14 +202,14 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                         elevation: 8,
                         shadowColor: AppColors.primary.withValues(alpha: 0.5),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.stop_rounded, size: 28),
-                          SizedBox(width: 12),
+                          const Icon(Icons.stop_rounded, size: 28),
+                          const SizedBox(width: 12),
                           Text(
-                            'DETENER ALARMA',
-                            style: TextStyle(
+                            S.of(context).stopAlarm,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1,
@@ -223,11 +255,8 @@ class _SwipeToStopWidgetState extends State<_SwipeToStopWidget> {
     return Column(
       children: [
         Text(
-          'o desliza para detener',
-          style: TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 12,
-          ),
+          S.of(context).orSwipeToStop,
+          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
         ),
         const SizedBox(height: 12),
         Container(
@@ -276,21 +305,15 @@ class _SwipeToStopWidgetState extends State<_SwipeToStopWidget> {
                       shape: BoxShape.circle,
                       color: AppColors.primary,
                     ),
-                    child: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
+                    child: const Icon(Icons.chevron_right, color: Colors.white),
                   ),
                 ),
               ),
               // Texto
               Center(
                 child: Text(
-                  'Desliza →',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 14,
-                  ),
+                  S.of(context).swipe,
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 ),
               ),
             ],

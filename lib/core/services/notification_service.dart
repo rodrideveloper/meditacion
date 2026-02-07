@@ -1,321 +1,241 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 import '../constants/app_constants.dart';
-import '../constants/sound_constants.dart';
+import '../l10n/app_strings.dart';
+import '../l10n/locale_provider.dart';
+import '../di/injection_container.dart';
+import 'meditation_history_service.dart';
 
-/// Callback para manejar respuestas de notificación en background
-@pragma('vm:entry-point')
-void notificationBackgroundHandler(NotificationResponse response) {
-  // Este callback se ejecuta cuando la app está cerrada
-  // La navegación se maneja en el main.dart
-  debugPrint('Background notification response: ${response.payload}');
-}
+/// IDs fijos de notificación
+const int _kDailyReminderId = 3001;
+const int _kStreakId = 3002;
+const int _kInactivityNudgeId = 3003;
 
-/// Servicio para manejar notificaciones y alarmas
+/// Canal de Android para recordatorios (separado del canal de alarma)
+const String _kChannelId = 'meditation_reminders';
+
+/// Gestiona las notificaciones de la app usando flutter_local_notifications:
+///  1. Recordatorio diario – zonedSchedule con matchDateTimeComponents.time
+///  2. Racha (streak) – show() inmediato después de completar sesión
+///  3. Nudge de inactividad – zonedSchedule one-shot a 48 h
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
+  final SharedPreferences _prefs;
+  final MeditationHistoryService _historyService;
+  final FlutterLocalNotificationsPlugin _plugin;
 
-  final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
+  NotificationService(this._prefs, this._historyService)
+    : _plugin = FlutterLocalNotificationsPlugin();
 
-  bool _initialized = false;
+  // ──────────────────────────────────────────────
+  //  Inicialización
+  // ──────────────────────────────────────────────
 
-  /// Callback que se ejecuta cuando el usuario toca la notificación
-  Function(String? payload)? onNotificationTapped;
-
-  /// Plugin getter para acceso externo
-  FlutterLocalNotificationsPlugin get plugin => _plugin;
-
-  /// Inicializar el servicio de notificaciones
   Future<void> initialize() async {
-    if (_initialized) return;
+    // Timezone
+    tz.initializeTimeZones();
+    final tzInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
 
-    // Inicializar timezone
-    tz_data.initializeTimeZones();
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
-
-    // Configuración para Android
+    // Plugin init
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
-
-    // Configuración para iOS
-    final darwinSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-      notificationCategories: [
-        DarwinNotificationCategory(
-          'meditation_complete',
-          actions: [
-            DarwinNotificationAction.plain(
-              'stop_alarm',
-              'Detener',
-              options: {DarwinNotificationActionOption.foreground},
-            ),
-          ],
-        ),
-      ],
-    );
-
-    final initSettings = InitializationSettings(
+    const darwinSettings = DarwinInitializationSettings();
+    const settings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,
     );
 
-    await _plugin.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationResponse,
-      onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
-    );
+    await _plugin.initialize(settings: settings);
 
-    // Crear canal de notificaciones en Android
-    await _createNotificationChannel();
+    // Re-programar lo que esté activo
+    if (isDailyReminderEnabled) {
+      await scheduleDailyReminder(
+        hour: dailyReminderHour,
+        minute: dailyReminderMinute,
+      );
+    }
 
-    _initialized = true;
+    if (isInactivityNudgeEnabled) {
+      await _scheduleInactivityNudge();
+    }
+
     debugPrint('NotificationService initialized');
   }
 
-  /// Crear canal de notificaciones para Android
-  Future<void> _createNotificationChannel() async {
-    final androidPlugin = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+  // ──────────────────────────────────────────────
+  //  Detalles de notificación reutilizables
+  // ──────────────────────────────────────────────
 
-    if (androidPlugin != null) {
-      // Eliminar canal anterior si existe
-      await androidPlugin.deleteNotificationChannel('meditation_alarm_channel');
-      await androidPlugin.deleteNotificationChannel(
-        'meditation_alarm_channel_v2',
-      );
+  /// Current localized strings based on persisted locale.
+  AppStrings get _s => getIt<LocaleProvider>().strings;
 
-      // Crear canal con sonido personalizado y stream de ALARMA
-      await androidPlugin.createNotificationChannel(
-        const AndroidNotificationChannel(
-          AppConstants.notificationChannelId,
-          AppConstants.notificationChannelName,
-          description: AppConstants.notificationChannelDescription,
-          importance: Importance.max,
-          playSound: true,
-          sound: RawResourceAndroidNotificationSound('angelical'),
-          enableVibration: true,
-          showBadge: true,
-          enableLights: true,
-          // Usar el stream de ALARMA para que suene aunque esté en silencio
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-        ),
-      );
-    }
+  NotificationDetails get _notificationDetails {
+    final androidDetails = AndroidNotificationDetails(
+      _kChannelId,
+      _s.notifChannelName,
+      channelDescription: _s.notifChannelDesc,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+    return NotificationDetails(
+      android: androidDetails,
+      iOS: const DarwinNotificationDetails(),
+    );
   }
 
-  /// Manejar respuesta de notificación
-  void _onNotificationResponse(NotificationResponse response) {
-    debugPrint('Notification tapped: ${response.payload}');
-    onNotificationTapped?.call(response.payload);
-  }
+  // ──────────────────────────────────────────────
+  //  1. Recordatorio diario
+  // ──────────────────────────────────────────────
 
-  /// Programar alarma de meditación
-  Future<bool> scheduleMeditationAlarm({
-    required Duration duration,
-    required MeditationSound sound,
-    bool vibrate = true,
+  bool get isDailyReminderEnabled =>
+      _prefs.getBool(AppConstants.prefDailyReminderEnabled) ?? false;
+
+  int get dailyReminderHour =>
+      _prefs.getInt(AppConstants.prefDailyReminderHour) ??
+      AppConstants.defaultReminderHour;
+
+  int get dailyReminderMinute =>
+      _prefs.getInt(AppConstants.prefDailyReminderMinute) ??
+      AppConstants.defaultReminderMinute;
+
+  /// Programa un recordatorio diario a la hora indicada.
+  Future<void> scheduleDailyReminder({
+    required int hour,
+    required int minute,
   }) async {
+    await _prefs.setBool(AppConstants.prefDailyReminderEnabled, true);
+    await _prefs.setInt(AppConstants.prefDailyReminderHour, hour);
+    await _prefs.setInt(AppConstants.prefDailyReminderMinute, minute);
+
+    // Cancelar la anterior si existía
+    await _plugin.cancel(id: _kDailyReminderId);
+
+    // Próxima instancia de esa hora
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+
     try {
-      final scheduledTime = tz.TZDateTime.now(tz.local).add(duration);
-
-      final androidDetails = AndroidNotificationDetails(
-        AppConstants.notificationChannelId,
-        AppConstants.notificationChannelName,
-        channelDescription: AppConstants.notificationChannelDescription,
-        importance: Importance.max,
-        priority: Priority.high,
-        // Full screen intent para mostrar sobre lock screen
-        fullScreenIntent: true,
-        // Categoría de alarma
-        category: AndroidNotificationCategory.alarm,
-        // Sonido personalizado
-        sound: RawResourceAndroidNotificationSound(sound.androidRawName),
-        playSound: true,
-        // Vibración
-        enableVibration: vibrate,
-        vibrationPattern: vibrate
-            ? Int64List.fromList([0, 500, 200, 500, 200, 500])
-            : null,
-        // Configuraciones adicionales
-        visibility: NotificationVisibility.public,
-        autoCancel: false,
-        ongoing: true,
-        // Icono grande
-        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-        // Estilo
-        styleInformation: const BigTextStyleInformation(
-          'Tu sesión de meditación ha terminado. Toca para detener la alarma.',
-          contentTitle: '🧘 Meditación Completada',
-          summaryText: 'Meditation Timer',
-        ),
-        // Acciones
-        actions: const [
-          AndroidNotificationAction(
-            'stop_alarm',
-            'Detener',
-            showsUserInterface: true,
-            cancelNotification: true,
-          ),
-        ],
-      );
-
-      const iosDetails = DarwinNotificationDetails(
-        sound: 'angelical.aiff',
-        presentAlert: true,
-        presentSound: true,
-        presentBadge: true,
-        interruptionLevel: InterruptionLevel.timeSensitive,
-        categoryIdentifier: 'meditation_complete',
-      );
-
-      final notificationDetails = NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-      );
-
       await _plugin.zonedSchedule(
-        AppConstants.meditationAlarmNotificationId,
-        '🧘 Meditación Completada',
-        'Tu sesión de meditación ha terminado',
-        scheduledTime,
-        notificationDetails,
-        // Usa AlarmManager.setAlarmClock() internamente
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        // Parámetro requerido en v18+ - null para alarma única (no repetitiva)
-        matchDateTimeComponents: null,
-        payload: 'meditation_complete',
+        id: _kDailyReminderId,
+        title: _s.notifDailyTitle,
+        body: _s.notifDailyBody,
+        scheduledDate: scheduled,
+        notificationDetails: _notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time, // repite diario
       );
-
-      debugPrint('Alarm scheduled for: $scheduledTime');
-      return true;
+      debugPrint(
+        'Daily reminder scheduled at $hour:${minute.toString().padLeft(2, '0')}',
+      );
     } catch (e) {
-      debugPrint('Error scheduling alarm: $e');
-      return false;
+      debugPrint('Could not schedule daily reminder: $e');
     }
   }
 
-  /// Cancelar alarma programada
-  Future<void> cancelAlarm() async {
-    await _plugin.cancel(AppConstants.meditationAlarmNotificationId);
-    debugPrint('Alarm cancelled');
+  /// Cancela el recordatorio diario.
+  Future<void> cancelDailyReminder() async {
+    await _prefs.setBool(AppConstants.prefDailyReminderEnabled, false);
+    await _plugin.cancel(id: _kDailyReminderId);
+    debugPrint('Daily reminder cancelled');
   }
 
-  /// Cancelar todas las notificaciones
-  Future<void> cancelAll() async {
-    await _plugin.cancelAll();
-    debugPrint('All notifications cancelled');
+  // ──────────────────────────────────────────────
+  //  2. Notificación de racha (streak)
+  // ──────────────────────────────────────────────
+
+  bool get isStreakNotificationsEnabled =>
+      _prefs.getBool(AppConstants.prefStreakNotificationsEnabled) ?? true;
+
+  Future<void> setStreakNotificationsEnabled(bool value) async {
+    await _prefs.setBool(AppConstants.prefStreakNotificationsEnabled, value);
   }
 
-  /// Verificar si hay una notificación pendiente
-  Future<bool> hasPendingAlarm() async {
-    final pending = await _plugin.pendingNotificationRequests();
-    return pending.any(
-      (n) => n.id == AppConstants.meditationAlarmNotificationId,
-    );
-  }
+  /// Llamar después de completar una sesión.
+  Future<void> notifyStreakIfNeeded() async {
+    if (!isStreakNotificationsEnabled) return;
 
-  /// Obtener detalles de lanzamiento de la app
-  Future<NotificationAppLaunchDetails?> getAppLaunchDetails() async {
-    return await _plugin.getNotificationAppLaunchDetails();
-  }
+    final streak = _historyService.getCurrentStreak();
+    if (streak < 2) return;
 
-  /// Solicitar permisos de notificación en Android
-  Future<bool> requestAndroidPermissions() async {
-    if (!Platform.isAndroid) return true;
-
-    final androidPlugin = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-
-    if (androidPlugin == null) return false;
-
-    // Permiso de notificaciones (Android 13+)
-    final notifGranted = await androidPlugin.requestNotificationsPermission();
-
-    // Permiso de alarmas exactas (Android 12+)
-    final exactAlarmGranted = await androidPlugin
-        .requestExactAlarmsPermission();
-
-    // Permiso de full-screen intent
-    final fullScreenGranted = await androidPlugin
-        .requestFullScreenIntentPermission();
-
-    debugPrint(
-      'Permissions - Notifications: $notifGranted, '
-      'Exact Alarms: $exactAlarmGranted, Full Screen: $fullScreenGranted',
+    await _plugin.show(
+      id: _kStreakId,
+      title: _s.notifStreakTitle(streak),
+      body: _s.notifStreakBody(streak),
+      notificationDetails: _notificationDetails,
     );
 
-    return (notifGranted ?? false) && (exactAlarmGranted ?? false);
+    debugPrint('Streak notification shown: $streak days');
   }
 
-  /// Solicitar permisos de notificación en iOS
-  Future<bool> requestIOSPermissions() async {
-    if (!Platform.isIOS) return true;
+  // ──────────────────────────────────────────────
+  //  3. Nudge de inactividad
+  // ──────────────────────────────────────────────
 
-    final iosPlugin = _plugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >();
+  bool get isInactivityNudgeEnabled =>
+      _prefs.getBool(AppConstants.prefInactivityNudgeEnabled) ?? true;
 
-    if (iosPlugin == null) return false;
-
-    final granted = await iosPlugin.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-      critical: true,
-    );
-
-    debugPrint('iOS permissions granted: $granted');
-    return granted ?? false;
-  }
-
-  /// Solicitar todos los permisos necesarios
-  Future<bool> requestAllPermissions() async {
-    if (Platform.isAndroid) {
-      return await requestAndroidPermissions();
-    } else if (Platform.isIOS) {
-      return await requestIOSPermissions();
+  Future<void> setInactivityNudgeEnabled(bool value) async {
+    await _prefs.setBool(AppConstants.prefInactivityNudgeEnabled, value);
+    if (value) {
+      await _scheduleInactivityNudge();
+    } else {
+      await _plugin.cancel(id: _kInactivityNudgeId);
     }
-    return true;
   }
 
-  /// Verificar si los permisos están concedidos
-  Future<bool> arePermissionsGranted() async {
-    if (Platform.isAndroid) {
-      final androidPlugin = _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
+  /// (Re)programa el nudge a 48 h desde ahora.
+  Future<void> resetInactivityNudge() async {
+    if (!isInactivityNudgeEnabled) return;
+    await _scheduleInactivityNudge();
+  }
 
-      if (androidPlugin == null) return false;
+  Future<void> _scheduleInactivityNudge() async {
+    await _plugin.cancel(id: _kInactivityNudgeId);
 
-      final areNotificationsEnabled = await androidPlugin
-          .areNotificationsEnabled();
+    final scheduled = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(hours: AppConstants.inactivityNudgeHours));
 
-      return areNotificationsEnabled ?? false;
-    } else if (Platform.isIOS) {
-      // En iOS, verificamos solicitando permisos (no hay método directo)
-      return true;
+    try {
+      await _plugin.zonedSchedule(
+        id: _kInactivityNudgeId,
+        title: _s.notifInactivityTitle,
+        body: _s.notifInactivityBody,
+        scheduledDate: scheduled,
+        notificationDetails: _notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+      debugPrint(
+        'Inactivity nudge scheduled in ${AppConstants.inactivityNudgeHours} h',
+      );
+    } catch (e) {
+      debugPrint('Could not schedule inactivity nudge: $e');
     }
-    return true;
+  }
+
+  // ──────────────────────────────────────────────
+  //  Callback post-sesión (central)
+  // ──────────────────────────────────────────────
+
+  /// Llama a esto cada vez que una sesión se completa.
+  Future<void> onSessionCompleted() async {
+    await notifyStreakIfNeeded();
+    await resetInactivityNudge();
   }
 }

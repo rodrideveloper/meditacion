@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/meditation_session.dart';
 import '../bloc/meditation_bloc.dart';
@@ -15,10 +16,7 @@ import '../widgets/timer_display.dart';
 class MeditationPage extends StatelessWidget {
   final MeditationSession session;
 
-  const MeditationPage({
-    super.key,
-    required this.session,
-  });
+  const MeditationPage({super.key, required this.session});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +52,9 @@ class _MeditationPageContent extends StatelessWidget {
                 if (state is TimerCompleted) {
                   // El timer terminó, pero la notificación ya fue programada
                   // así que solo cerramos esta pantalla
-                  context.read<MeditationBloc>().add(const MeditationCompletedEvent());
+                  context.read<MeditationBloc>().add(
+                    const MeditationCompletedEvent(),
+                  );
                   Navigator.of(context).pop();
                 }
               },
@@ -72,7 +72,7 @@ class _MeditationPageContent extends StatelessWidget {
                             onPressed: () => _showCancelDialog(context),
                           ),
                           Text(
-                            'Meditando...',
+                            S.of(context).meditating,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(width: 48), // Placeholder para centrar
@@ -95,12 +95,12 @@ class _MeditationPageContent extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-                        _getMotivationalMessage(state),
+                        _getMotivationalMessage(context, state),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.textSecondary,
-                              fontStyle: FontStyle.italic,
-                            ),
+                          color: AppColors.textSecondary,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
 
@@ -130,14 +130,14 @@ class _MeditationPageContent extends StatelessWidget {
           // Botón de pausar
           _ControlButton(
             icon: Icons.pause_rounded,
-            label: 'Pausar',
+            label: S.of(context).pause,
             onPressed: () => timerBloc.add(const PauseTimerEvent()),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
           _ControlButton(
             icon: Icons.stop_rounded,
-            label: 'Detener',
+            label: S.of(context).stopAction,
             color: AppColors.accent,
             onPressed: () => _showCancelDialog(context),
           ),
@@ -150,14 +150,14 @@ class _MeditationPageContent extends StatelessWidget {
           // Botón de reanudar
           _ControlButton(
             icon: Icons.play_arrow_rounded,
-            label: 'Reanudar',
+            label: S.of(context).resume,
             onPressed: () => timerBloc.add(const ResumeTimerEvent()),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
           _ControlButton(
             icon: Icons.stop_rounded,
-            label: 'Detener',
+            label: S.of(context).stopAction,
             color: AppColors.accent,
             onPressed: () => _showCancelDialog(context),
           ),
@@ -168,36 +168,36 @@ class _MeditationPageContent extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  String _getMotivationalMessage(TimerState state) {
+  String _getMotivationalMessage(BuildContext context, TimerState state) {
+    final s = S.of(context);
     if (state is TimerPaused) {
-      return 'Toma un momento. Cuando estés listo, continúa tu práctica.';
+      return s.motivPaused;
     }
 
     final progress = state.progress;
     if (progress < 0.25) {
-      return 'Respira profundo. Deja ir las tensiones del día.';
+      return s.motivEarly;
     } else if (progress < 0.5) {
-      return 'Observa tus pensamientos sin juzgarlos.';
+      return s.motivMid;
     } else if (progress < 0.75) {
-      return 'Estás haciendo un gran trabajo. Mantén el enfoque.';
+      return s.motivLate;
     } else {
-      return 'Ya casi terminas. Disfruta estos últimos momentos de paz.';
+      return s.motivFinal;
     }
   }
 
   void _showCancelDialog(BuildContext context) {
+    final s = S.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('¿Cancelar meditación?'),
-        content: const Text(
-          'Tu progreso no se guardará y la alarma será cancelada.',
-        ),
+        title: Text(s.cancelMeditation),
+        content: Text(s.cancelMeditationBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Continuar'),
+            child: Text(s.continueAction),
           ),
           TextButton(
             onPressed: () {
@@ -207,7 +207,7 @@ class _MeditationPageContent extends StatelessWidget {
               Navigator.of(context).pop();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
         ],
       ),
@@ -245,21 +245,14 @@ class _ControlButton extends StatelessWidget {
               width: 72,
               height: 72,
               alignment: Alignment.center,
-              child: Icon(
-                icon,
-                size: 36,
-                color: buttonColor,
-              ),
+              child: Icon(icon, size: 36, color: buttonColor),
             ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],
     );

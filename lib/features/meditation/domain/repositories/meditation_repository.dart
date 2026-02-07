@@ -10,6 +10,7 @@ abstract class MeditationRepository {
     required Duration duration,
     required String soundId,
     required bool vibrationEnabled,
+    double alarmVolume = 0.8,
   });
 
   /// Cancelar la sesión de meditación activa

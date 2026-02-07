@@ -5,8 +5,8 @@ class AppConstants {
   /// Nombre de la aplicación
   static const String appName = 'Meditation Timer';
 
-  /// ID del canal de notificaciones (v3 con stream de alarma)
-  static const String notificationChannelId = 'meditation_alarm_channel_v3';
+  /// ID del canal de notificaciones (v5 con versión estable del plugin)
+  static const String notificationChannelId = 'meditation_alarm_channel_v5';
   static const String notificationChannelName = 'Alarmas de Meditación';
   static const String notificationChannelDescription =
       'Notificaciones de fin de meditación con sonido';
@@ -25,4 +25,24 @@ class AppConstants {
   static const String prefLastDuration = 'last_duration';
   static const String prefSelectedSound = 'selected_sound';
   static const String prefVibrationEnabled = 'vibration_enabled';
+  static const String prefAlarmVolume = 'alarm_volume';
+
+  /// Estado de sesión e historial
+  static const String prefActiveSessionJson = 'active_session_json';
+  static const String prefSessionHistoryList = 'session_history_list';
+
+  /// Notificaciones / recordatorios
+  static const String prefDailyReminderEnabled = 'daily_reminder_enabled';
+  static const String prefDailyReminderHour = 'daily_reminder_hour';
+  static const String prefDailyReminderMinute = 'daily_reminder_minute';
+  static const String prefInactivityNudgeEnabled = 'inactivity_nudge_enabled';
+  static const String prefStreakNotificationsEnabled =
+      'streak_notifications_enabled';
+
+  /// Valores por defecto de recordatorio
+  static const int defaultReminderHour = 8; // 08:00
+  static const int defaultReminderMinute = 0;
+
+  /// Horas de inactividad para nudge (48 h)
+  static const int inactivityNudgeHours = 48;
 }

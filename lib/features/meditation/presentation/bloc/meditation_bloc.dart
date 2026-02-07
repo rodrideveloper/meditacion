@@ -28,6 +28,7 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
     on<ChangeDurationEvent>(_onChangeDuration);
     on<ChangeSoundEvent>(_onChangeSound);
     on<ToggleVibrationEvent>(_onToggleVibration);
+    on<ChangeVolumeEvent>(_onChangeVolume);
     on<StartMeditationEvent>(_onStartMeditation);
     on<CancelMeditationEvent>(_onCancelMeditation);
     on<MeditationCompletedEvent>(_onMeditationCompleted);
@@ -48,18 +49,24 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
     result.fold(
       (failure) {
         // Si hay error, usar valores por defecto
-        emit(MeditationReady(
-          durationMinutes: 10,
-          selectedSound: MeditationSound.defaultSound,
-          vibrationEnabled: true,
-        ));
+        emit(
+          MeditationReady(
+            durationMinutes: 10,
+            selectedSound: MeditationSound.defaultSound,
+            vibrationEnabled: true,
+            alarmVolume: 0.8,
+          ),
+        );
       },
       (settings) {
-        emit(MeditationReady(
-          durationMinutes: settings.lastDurationMinutes,
-          selectedSound: settings.selectedSound,
-          vibrationEnabled: settings.vibrationEnabled,
-        ));
+        emit(
+          MeditationReady(
+            durationMinutes: settings.lastDurationMinutes,
+            selectedSound: settings.selectedSound,
+            vibrationEnabled: settings.vibrationEnabled,
+            alarmVolume: settings.alarmVolume,
+          ),
+        );
       },
     );
   }
@@ -74,10 +81,7 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
     }
   }
 
-  void _onChangeSound(
-    ChangeSoundEvent event,
-    Emitter<MeditationState> emit,
-  ) {
+  void _onChangeSound(ChangeSoundEvent event, Emitter<MeditationState> emit) {
     final currentState = state;
     if (currentState is MeditationReady) {
       final sound = MeditationSound.getById(event.soundId);
@@ -93,7 +97,16 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
   ) {
     final currentState = state;
     if (currentState is MeditationReady) {
-      emit(currentState.copyWith(vibrationEnabled: !currentState.vibrationEnabled));
+      emit(
+        currentState.copyWith(vibrationEnabled: !currentState.vibrationEnabled),
+      );
+    }
+  }
+
+  void _onChangeVolume(ChangeVolumeEvent event, Emitter<MeditationState> emit) {
+    final currentState = state;
+    if (currentState is MeditationReady) {
+      emit(currentState.copyWith(alarmVolume: event.volume));
     }
   }
 
@@ -110,6 +123,7 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
       duration: Duration(minutes: currentState.durationMinutes),
       soundId: currentState.selectedSound.id,
       vibrationEnabled: currentState.vibrationEnabled,
+      alarmVolume: currentState.alarmVolume,
     );
 
     final result = await startMeditation(params);

@@ -25,25 +25,34 @@ class MeditationReady extends MeditationState {
   final int durationMinutes;
   final MeditationSound selectedSound;
   final bool vibrationEnabled;
+  final double alarmVolume;
 
   const MeditationReady({
     required this.durationMinutes,
     required this.selectedSound,
     required this.vibrationEnabled,
+    this.alarmVolume = 0.8,
   });
 
   @override
-  List<Object> get props => [durationMinutes, selectedSound, vibrationEnabled];
+  List<Object> get props => [
+    durationMinutes,
+    selectedSound,
+    vibrationEnabled,
+    alarmVolume,
+  ];
 
   MeditationReady copyWith({
     int? durationMinutes,
     MeditationSound? selectedSound,
     bool? vibrationEnabled,
+    double? alarmVolume,
   }) {
     return MeditationReady(
       durationMinutes: durationMinutes ?? this.durationMinutes,
       selectedSound: selectedSound ?? this.selectedSound,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+      alarmVolume: alarmVolume ?? this.alarmVolume,
     );
   }
 }

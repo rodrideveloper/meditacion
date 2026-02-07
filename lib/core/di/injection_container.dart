@@ -1,8 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/notification_service.dart';
+import '../l10n/locale_provider.dart';
+import '../services/native_alarm_service.dart';
 import '../services/audio_service.dart';
+import '../services/meditation_history_service.dart';
+import '../services/notification_service.dart';
 import '../../features/meditation/data/datasources/meditation_local_datasource.dart';
 import '../../features/meditation/data/repositories/meditation_repository_impl.dart';
 import '../../features/meditation/domain/repositories/meditation_repository.dart';
@@ -22,8 +25,22 @@ Future<void> initializeDependencies() async {
   getIt.registerSingleton<SharedPreferences>(sharedPreferences);
 
   // Services
-  getIt.registerLazySingleton<NotificationService>(() => NotificationService());
+  getIt.registerLazySingleton<NativeAlarmService>(() => NativeAlarmService());
   getIt.registerLazySingleton<AudioService>(() => AudioService());
+  getIt.registerLazySingleton<MeditationHistoryService>(
+    () => MeditationHistoryService(getIt<SharedPreferences>()),
+  );
+  getIt.registerLazySingleton<NotificationService>(
+    () => NotificationService(
+      getIt<SharedPreferences>(),
+      getIt<MeditationHistoryService>(),
+    ),
+  );
+
+  // Locale
+  getIt.registerSingleton<LocaleProvider>(
+    LocaleProvider(getIt<SharedPreferences>()),
+  );
 
   // Datasources
   getIt.registerLazySingleton<MeditationLocalDatasource>(
@@ -34,15 +51,24 @@ Future<void> initializeDependencies() async {
   getIt.registerLazySingleton<MeditationRepository>(
     () => MeditationRepositoryImpl(
       localDatasource: getIt<MeditationLocalDatasource>(),
-      notificationService: getIt<NotificationService>(),
+      nativeAlarmService: getIt<NativeAlarmService>(),
+      historyService: getIt<MeditationHistoryService>(),
     ),
   );
 
   // Use Cases
-  getIt.registerLazySingleton(() => StartMeditation(getIt<MeditationRepository>()));
-  getIt.registerLazySingleton(() => CancelMeditation(getIt<MeditationRepository>()));
-  getIt.registerLazySingleton(() => GetSavedSettings(getIt<MeditationRepository>()));
-  getIt.registerLazySingleton(() => SaveSettings(getIt<MeditationRepository>()));
+  getIt.registerLazySingleton(
+    () => StartMeditation(getIt<MeditationRepository>()),
+  );
+  getIt.registerLazySingleton(
+    () => CancelMeditation(getIt<MeditationRepository>()),
+  );
+  getIt.registerLazySingleton(
+    () => GetSavedSettings(getIt<MeditationRepository>()),
+  );
+  getIt.registerLazySingleton(
+    () => SaveSettings(getIt<MeditationRepository>()),
+  );
 
   // Blocs
   getIt.registerFactory(

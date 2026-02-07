@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Botón principal para iniciar/detener meditación
@@ -22,22 +23,16 @@ class MeditationButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        width: 180,
-        height: 180,
+        width: 140,
+        height: 140,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isActive
-                ? [
-                    AppColors.accent,
-                    AppColors.accent.withValues(alpha: 0.7),
-                  ]
-                : [
-                    AppColors.primary,
-                    AppColors.primaryDark,
-                  ],
+                ? [AppColors.accent, AppColors.accent.withValues(alpha: 0.7)]
+                : [AppColors.primary, AppColors.primaryDark],
           ),
           boxShadow: [
             BoxShadow(
@@ -58,15 +53,15 @@ class MeditationButton extends StatelessWidget {
                   children: [
                     Icon(
                       isActive ? Icons.stop_rounded : Icons.play_arrow_rounded,
-                      size: 64,
+                      size: 52,
                       color: Colors.white,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      isActive ? 'DETENER' : 'INICIAR',
+                      isActive ? S.of(context).stop : S.of(context).start,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 2,
                       ),

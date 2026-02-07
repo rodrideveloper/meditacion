@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Widget para seleccionar la duración de la meditación
@@ -21,7 +22,7 @@ class DurationPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Valor actual
+        // Valor actual centrado y prominente
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -29,20 +30,31 @@ class DurationPicker extends StatelessWidget {
           children: [
             Text(
               '$selectedMinutes',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontWeight: FontWeight.w300,
-                  ),
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                fontWeight: FontWeight.w200,
+                fontSize: 72,
+                color: AppColors.textPrimary,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
-              'min',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
+              S.of(context).minutesShort,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 6),
+        Text(
+          S.of(context).durationLabel,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textMuted,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 16),
 
         // Slider
         SliderTheme(
@@ -51,9 +63,9 @@ class DurationPicker extends StatelessWidget {
             inactiveTrackColor: AppColors.surface,
             thumbColor: AppColors.primaryLight,
             overlayColor: AppColors.primary.withValues(alpha: 0.2),
-            trackHeight: 8,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
           ),
           child: Slider(
             value: selectedMinutes.toDouble(),
@@ -63,19 +75,20 @@ class DurationPicker extends StatelessWidget {
             onChanged: (value) => onChanged(value.round()),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
 
-        // Presets rápidos
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
-          children: [5, 10, 15, 20, 30, 45, 60].map((minutes) {
+        // Presets rápidos — solo los más comunes
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [5, 10, 15, 20, 30, 60].map((minutes) {
             final isSelected = selectedMinutes == minutes;
-            return _PresetButton(
-              minutes: minutes,
-              isSelected: isSelected,
-              onTap: () => onChanged(minutes),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: _PresetChip(
+                minutes: minutes,
+                isSelected: isSelected,
+                onTap: () => onChanged(minutes),
+              ),
             );
           }).toList(),
         ),
@@ -84,12 +97,12 @@ class DurationPicker extends StatelessWidget {
   }
 }
 
-class _PresetButton extends StatelessWidget {
+class _PresetChip extends StatelessWidget {
   final int minutes;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _PresetButton({
+  const _PresetChip({
     required this.minutes,
     required this.isSelected,
     required this.onTap,
@@ -97,20 +110,21 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? AppColors.primary : AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Text(
-            '$minutes min',
-            style: TextStyle(
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          '$minutes',
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textMuted,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),

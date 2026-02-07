@@ -10,11 +10,14 @@ class StartMeditation {
   StartMeditation(this.repository);
 
   /// Ejecutar el caso de uso
-  Future<Either<Failure, MeditationSession>> call(StartMeditationParams params) {
+  Future<Either<Failure, MeditationSession>> call(
+    StartMeditationParams params,
+  ) {
     return repository.startMeditation(
       duration: params.duration,
       soundId: params.soundId,
       vibrationEnabled: params.vibrationEnabled,
+      alarmVolume: params.alarmVolume,
     );
   }
 }
@@ -24,10 +27,12 @@ class StartMeditationParams {
   final Duration duration;
   final String soundId;
   final bool vibrationEnabled;
+  final double alarmVolume;
 
   const StartMeditationParams({
     required this.duration,
     required this.soundId,
     this.vibrationEnabled = true,
+    this.alarmVolume = 0.8,
   });
 }

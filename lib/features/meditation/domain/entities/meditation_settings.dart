@@ -12,10 +12,14 @@ class MeditationSettings extends Equatable {
   /// Si la vibración está habilitada
   final bool vibrationEnabled;
 
+  /// Volumen máximo de la alarma (0.0 a 1.0)
+  final double alarmVolume;
+
   const MeditationSettings({
     required this.lastDurationMinutes,
     required this.selectedSoundId,
     required this.vibrationEnabled,
+    this.alarmVolume = 0.8,
   });
 
   /// Obtener el sonido seleccionado
@@ -31,6 +35,7 @@ class MeditationSettings extends Equatable {
       lastDurationMinutes: 10,
       selectedSoundId: 'angelical',
       vibrationEnabled: true,
+      alarmVolume: 0.8,
     );
   }
 
@@ -39,11 +44,13 @@ class MeditationSettings extends Equatable {
     int? lastDurationMinutes,
     String? selectedSoundId,
     bool? vibrationEnabled,
+    double? alarmVolume,
   }) {
     return MeditationSettings(
       lastDurationMinutes: lastDurationMinutes ?? this.lastDurationMinutes,
       selectedSoundId: selectedSoundId ?? this.selectedSoundId,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
+      alarmVolume: alarmVolume ?? this.alarmVolume,
     );
   }
 
@@ -52,5 +59,6 @@ class MeditationSettings extends Equatable {
     lastDurationMinutes,
     selectedSoundId,
     vibrationEnabled,
+    alarmVolume,
   ];
 }

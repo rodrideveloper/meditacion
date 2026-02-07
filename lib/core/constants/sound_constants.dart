@@ -10,6 +10,24 @@ class SoundConstants {
       assetPath: 'assets/sounds/angelical.mp3',
       androidRawName: 'angelical',
     ),
+    MeditationSound(
+      id: 'campana',
+      name: 'Campana',
+      assetPath: 'assets/sounds/campana.mp3',
+      androidRawName: 'campana',
+    ),
+    MeditationSound(
+      id: 'lluvia',
+      name: 'Lluvia',
+      assetPath: 'assets/sounds/lluvia.mp3',
+      androidRawName: 'lluvia',
+    ),
+    MeditationSound(
+      id: 'bosque',
+      name: 'Bosque',
+      assetPath: 'assets/sounds/bosque.mp3',
+      androidRawName: 'bosque',
+    ),
   ];
 
   /// Sonido por defecto

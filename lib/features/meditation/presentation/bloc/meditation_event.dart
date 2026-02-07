@@ -38,6 +38,16 @@ class ToggleVibrationEvent extends MeditationEvent {
   const ToggleVibrationEvent();
 }
 
+/// Cambiar volumen de alarma
+class ChangeVolumeEvent extends MeditationEvent {
+  final double volume;
+
+  const ChangeVolumeEvent(this.volume);
+
+  @override
+  List<Object> get props => [volume];
+}
+
 /// Iniciar meditación
 class StartMeditationEvent extends MeditationEvent {
   const StartMeditationEvent();
