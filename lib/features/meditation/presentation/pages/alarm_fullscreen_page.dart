@@ -29,6 +29,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
   @override
   void initState() {
     super.initState();
+    debugPrint('=== AlarmFullScreenPage.initState START ===');
 
     // Configurar animación de pulso
     _animationController = AnimationController(
@@ -45,8 +46,12 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
 
     // Iniciar sonido de alarma después del primer frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint(
+        'AlarmFullScreenPage: postFrameCallback fired, initializing alarm...',
+      );
       _initializeAndPlayAlarm();
     });
+    debugPrint('=== AlarmFullScreenPage.initState END ===');
   }
 
   Future<void> _initializeAndPlayAlarm() async {
@@ -84,8 +89,10 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
 
   Future<void> _stopAlarm() async {
     try {
+      // Detener sonido Flutter
       await _audioService.stop();
-      await _nativeAlarmService.cancelAlarm();
+      // Cancelar notificación nativa de alarma
+      await _nativeAlarmService.cancelAlarmNotification();
     } catch (e) {
       debugPrint('AlarmFullScreenPage: Error stopping alarm: $e');
     }
@@ -223,103 +230,12 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
 
                 const Spacer(),
 
-                // Deslizar para descartar (alternativa)
-                _SwipeToStopWidget(onStop: _stopAlarm),
-
                 const SizedBox(height: 40),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Widget de deslizar para detener
-class _SwipeToStopWidget extends StatefulWidget {
-  final VoidCallback onStop;
-
-  const _SwipeToStopWidget({required this.onStop});
-
-  @override
-  State<_SwipeToStopWidget> createState() => _SwipeToStopWidgetState();
-}
-
-class _SwipeToStopWidgetState extends State<_SwipeToStopWidget> {
-  double _dragPosition = 0;
-  final double _maxDrag = 200;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          S.of(context).orSwipeToStop,
-          style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: 280,
-          height: 60,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Stack(
-            children: [
-              // Fondo de progreso
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
-                width: 80 + _dragPosition,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              // Indicador de arrastre
-              Positioned(
-                left: _dragPosition,
-                top: 5,
-                child: GestureDetector(
-                  onHorizontalDragUpdate: (details) {
-                    setState(() {
-                      _dragPosition += details.delta.dx;
-                      _dragPosition = _dragPosition.clamp(0, _maxDrag);
-                    });
-                  },
-                  onHorizontalDragEnd: (details) {
-                    if (_dragPosition >= _maxDrag * 0.8) {
-                      widget.onStop();
-                    } else {
-                      setState(() {
-                        _dragPosition = 0;
-                      });
-                    }
-                  },
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary,
-                    ),
-                    child: const Icon(Icons.chevron_right, color: Colors.white),
-                  ),
-                ),
-              ),
-              // Texto
-              Center(
-                child: Text(
-                  S.of(context).swipe,
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

@@ -147,7 +147,6 @@ class _HomePageContent extends StatelessWidget {
           // ── Volumen + Vibración ──
           _SettingsRow(
             alarmVolume: state.alarmVolume,
-            vibrationEnabled: state.vibrationEnabled,
             onVolumeChanged: (v) {
               bloc.add(ChangeVolumeEvent(v));
               // Ajustar en tiempo real si hay un preview sonando
@@ -155,7 +154,6 @@ class _HomePageContent extends StatelessWidget {
                 audioService.setVolume(v);
               }
             },
-            onVibrationToggle: () => bloc.add(const ToggleVibrationEvent()),
           ),
 
           const SizedBox(height: 12),
@@ -180,15 +178,11 @@ class _HomePageContent extends StatelessWidget {
 
 class _SettingsRow extends StatelessWidget {
   final double alarmVolume;
-  final bool vibrationEnabled;
   final ValueChanged<double> onVolumeChanged;
-  final VoidCallback onVibrationToggle;
 
   const _SettingsRow({
     required this.alarmVolume,
-    required this.vibrationEnabled,
     required this.onVolumeChanged,
-    required this.onVibrationToggle,
   });
 
   @override
@@ -247,44 +241,6 @@ class _SettingsRow extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          // Divider sutil
-          Divider(
-            height: 1,
-            color: AppColors.background.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 4),
-          // Vibración
-          GestureDetector(
-            onTap: onVibrationToggle,
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.vibration,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    S.of(context).vibration,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-                SizedBox(
-                  height: 28,
-                  child: FittedBox(
-                    child: Switch(
-                      value: vibrationEnabled,
-                      onChanged: (_) => onVibrationToggle(),
-                      activeTrackColor: AppColors.primary,
-                      activeThumbColor: AppColors.primaryLight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

@@ -103,16 +103,18 @@ class AudioService {
 
       final targetVolume = maxVolume.clamp(0.0, 1.0);
       debugPrint('Alarm: loading asset ${sound.assetPath}');
-      await player.setAsset(sound.assetPath);
+      final duration = await player.setAsset(sound.assetPath);
+      debugPrint('Alarm: asset loaded, duration=$duration');
       await player.setLoopMode(LoopMode.one);
+      debugPrint('Alarm: loop mode set');
 
-      // Fade-in: arrancar en silencio y subir gradualmente en ~5 segundos
-      await player.setVolume(0.0);
-      await player.play();
+      // Arrancar directamente al volumen objetivo (sin fade-in problemático)
+      await player.setVolume(targetVolume);
+      debugPrint('Alarm: volume set to $targetVolume');
+      player
+          .play(); // No await — play() es un Future que se completa cuando termina
       _isPlaying = true;
-      debugPrint('Alarm sound started (fade-in to $targetVolume)');
-
-      _fadeIn(targetVolume);
+      debugPrint('Alarm sound started at volume $targetVolume');
     } catch (e) {
       debugPrint('Error playing alarm: $e');
       _isPlaying = false;

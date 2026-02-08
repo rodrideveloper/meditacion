@@ -33,7 +33,7 @@ android {
     defaultConfig {
         applicationId = "com.rodrigorodriguez.meditationtimer"
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35  // Android 15 — setAlarmClock() BAL exemption funciona correctamente
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

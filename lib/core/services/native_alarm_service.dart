@@ -18,41 +18,54 @@ class NativeAlarmService {
 
   /// Inicializar el servicio y escuchar eventos de alarma
   Future<void> initialize() async {
+    debugPrint('>>> NativeAlarmService.initialize() START');
     // Escuchar invocaciones desde Android (alarmTriggered)
     _methodChannel.setMethodCallHandler(_handleNativeCall);
-
-    // Verificar si hay una alarma pendiente (app abierta por alarma)
-    await _checkPendingAlarm();
-
-    debugPrint('NativeAlarmService initialized');
+    debugPrint('>>> MethodCallHandler set on channel');
+    debugPrint('>>> NativeAlarmService.initialize() END');
   }
 
-  /// Manejar llamadas desde Android → Flutter
-  Future<dynamic> _handleNativeCall(MethodCall call) async {
-    if (call.method == 'alarmTriggered') {
-      final args = call.arguments as Map?;
-      final soundId = args?['soundId'] as String? ?? 'angelical';
-      debugPrint('Native alarm triggered! Sound: $soundId');
-      onAlarmTriggered?.call(soundId);
-    }
-  }
-
-  /// Verificar si la app fue abierta por una alarma
-  Future<void> _checkPendingAlarm() async {
+  /// Verificar si hay alarma pendiente. Retorna el soundId si hay una, o null.
+  Future<String?> checkPendingAlarm() async {
+    debugPrint('>>> NativeAlarmService.checkPendingAlarm: checking...');
     try {
       final result = await _methodChannel.invokeMethod<Map>(
         'checkPendingAlarm',
       );
+      debugPrint('>>> checkPendingAlarm result: $result');
       if (result != null && result['hasPending'] == true) {
         final soundId = result['soundId'] as String? ?? 'angelical';
-        debugPrint('Pending alarm found! Sound: $soundId');
-
-        // Pequeño delay para asegurar que Flutter esté listo
-        await Future.delayed(const Duration(milliseconds: 500));
-        onAlarmTriggered?.call(soundId);
+        debugPrint('>>> PENDING ALARM FOUND! Sound: $soundId');
+        return soundId;
+      } else {
+        debugPrint('>>> No pending alarm found');
+        return null;
       }
     } catch (e) {
-      debugPrint('Error checking pending alarm: $e');
+      debugPrint('>>> Error checking pending alarm: $e');
+      return null;
+    }
+  }
+
+  /// Manejar llamadas desde Android → Flutter
+  Future<dynamic> _handleNativeCall(MethodCall call) async {
+    debugPrint(
+      '>>> NativeAlarmService._handleNativeCall: method=${call.method}',
+    );
+    debugPrint(
+      '>>> NativeAlarmService._handleNativeCall: arguments=${call.arguments}',
+    );
+    if (call.method == 'alarmTriggered') {
+      final args = call.arguments as Map?;
+      final soundId = args?['soundId'] as String? ?? 'angelical';
+      debugPrint('>>> ALARM TRIGGERED via MethodChannel! Sound: $soundId');
+      debugPrint(
+        '>>> onAlarmTriggered callback is null: ${onAlarmTriggered == null}',
+      );
+      onAlarmTriggered?.call(soundId);
+      debugPrint('>>> onAlarmTriggered callback invoked');
+    } else {
+      debugPrint('>>> Unknown method from native: ${call.method}');
     }
   }
 
@@ -90,6 +103,16 @@ class NativeAlarmService {
       debugPrint('Alarm cancelled');
     } catch (e) {
       debugPrint('Error cancelling alarm: $e');
+    }
+  }
+
+  /// Cancelar la notificación de alarma nativa
+  Future<void> cancelAlarmNotification() async {
+    try {
+      await _methodChannel.invokeMethod('cancelAlarmNotification');
+      debugPrint('Alarm notification cancelled from Flutter');
+    } catch (e) {
+      debugPrint('Error cancelling alarm notification: $e');
     }
   }
 

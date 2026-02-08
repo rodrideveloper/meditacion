@@ -9,6 +9,14 @@ import android.util.Log
 
 /**
  * Clase helper para programar y cancelar alarmas usando AlarmManager.
+ *
+ * ESTRATEGIA (Samsung One UI + Android 15):
+ * Usamos PendingIntent.getBroadcast() → AlarmReceiver.
+ * AlarmReceiver publica una notificación con fullScreenIntent,
+ * que tiene su propia exención y NO depende de BAL.
+ *
+ * Esto replica el patrón de Google Clock y funciona en Samsung
+ * donde el AlarmManager no concede BAL al PendingIntent sender.
  */
 class AlarmScheduler(private val context: Context) {
     
@@ -23,7 +31,10 @@ class AlarmScheduler(private val context: Context) {
     
     /**
      * Programa una alarma para dispararse en el tiempo especificado.
-     * 
+     *
+     * Usa PendingIntent.getBroadcast() → AlarmReceiver, que publica
+     * una notificación con fullScreenIntent (no necesita BAL).
+     *
      * @param triggerAtMillis Tiempo absoluto en milisegundos desde epoch
      * @param soundId ID del sonido a reproducir
      * @return true si la alarma fue programada exitosamente
@@ -34,26 +45,31 @@ class AlarmScheduler(private val context: Context) {
                 action = AlarmReceiver.ACTION_ALARM_TRIGGERED
                 putExtra(AlarmReceiver.EXTRA_SOUND_ID, soundId)
             }
-            
+
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 ALARM_REQUEST_CODE,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
-            // Usar setAlarmClock para máxima prioridad (como un despertador)
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(
-                triggerAtMillis,
-                pendingIntent // Intent para mostrar cuando el usuario toca el icono de alarma
+            Log.d(TAG, "Created PendingIntent.getBroadcast() → AlarmReceiver")
+
+            // showIntent: lo que se muestra cuando el usuario toca el icono de alarma en status bar
+            val showIntent = PendingIntent.getActivity(
+                context, 0,
+                Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent)
             alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-            
+
             Log.d(TAG, "Alarm scheduled for: $triggerAtMillis (in ${(triggerAtMillis - System.currentTimeMillis()) / 1000} seconds)")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Error scheduling alarm: ${e.message}")
+            Log.e(TAG, "Error scheduling alarm: ${e.message}", e)
             false
         }
     }
@@ -75,20 +91,21 @@ class AlarmScheduler(private val context: Context) {
      */
     fun cancelAlarm() {
         try {
+            // Debe coincidir con el PendingIntent.getBroadcast() usado en scheduleAlarm
             val intent = Intent(context, AlarmReceiver::class.java).apply {
                 action = AlarmReceiver.ACTION_ALARM_TRIGGERED
             }
-            
+
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 ALARM_REQUEST_CODE,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
-            
+
             Log.d(TAG, "Alarm cancelled")
         } catch (e: Exception) {
             Log.e(TAG, "Error cancelling alarm: ${e.message}")

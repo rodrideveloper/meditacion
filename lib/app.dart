@@ -14,8 +14,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MeditationApp extends StatefulWidget {
   final String initialRoute;
+  final String? alarmSoundId;
 
-  const MeditationApp({super.key, this.initialRoute = '/'});
+  const MeditationApp({super.key, this.initialRoute = '/', this.alarmSoundId});
 
   @override
   State<MeditationApp> createState() => _MeditationAppState();
@@ -50,11 +51,42 @@ class _MeditationAppState extends State<MeditationApp> {
         theme: AppTheme.darkTheme,
         navigatorKey: navigatorKey,
         initialRoute: widget.initialRoute,
-        routes: {
-          '/': (context) => const HomePage(),
-          '/alarm': (context) => const AlarmFullScreenPage(),
-          '/history': (context) => const HistoryPage(),
-          '/privacy': (context) => const PrivacyPolicyPage(),
+        onGenerateRoute: (settings) {
+          // Si es la ruta /alarm abierta desde cold-start, inyectar soundId
+          if (settings.name == '/alarm') {
+            final args =
+                settings.arguments as Map<String, dynamic>? ??
+                (widget.alarmSoundId != null
+                    ? {'soundId': widget.alarmSoundId}
+                    : <String, dynamic>{});
+            return MaterialPageRoute(
+              settings: RouteSettings(name: '/alarm', arguments: args),
+              builder: (context) => const AlarmFullScreenPage(),
+            );
+          }
+          // Rutas estándar
+          switch (settings.name) {
+            case '/':
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => const HomePage(),
+              );
+            case '/history':
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => const HistoryPage(),
+              );
+            case '/privacy':
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => const PrivacyPolicyPage(),
+              );
+            default:
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => const HomePage(),
+              );
+          }
         },
       ),
     );

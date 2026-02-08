@@ -46,58 +46,119 @@ void main() async {
   final notificationService = getIt<NotificationService>();
   await notificationService.initialize();
 
-  // Configurar callback de alarma nativa
+  // Configurar callback de alarma nativa (para cuando la app ya está corriendo)
+  debugPrint('>>> Setting onAlarmTriggered callback on NativeAlarmService');
   nativeAlarmService.onAlarmTriggered = _onAlarmTriggered;
+  debugPrint('>>> onAlarmTriggered callback set');
+
+  // Verificar si la app fue abierta por una alarma (cold start)
+  String initialRoute = '/';
+  String? pendingSoundId;
+  final pendingResult = await nativeAlarmService.checkPendingAlarm();
+  if (pendingResult != null) {
+    debugPrint('>>> Cold-start alarm detected! soundId=${pendingResult}');
+    initialRoute = '/alarm';
+    pendingSoundId = pendingResult;
+
+    // Persistir historial y notificar (best-effort, como en _onAlarmTriggered)
+    try {
+      unawaited(
+        getIt<MeditationHistoryService>().completeActiveSession(
+          soundIdFromAlarm: pendingResult,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error persisting session on cold start: $e');
+    }
+    try {
+      unawaited(getIt<NotificationService>().onSessionCompleted());
+    } catch (e) {
+      debugPrint('Error notifying session completed on cold start: $e');
+    }
+  }
 
   // Remove splash screen now that init is complete
   FlutterNativeSplash.remove();
 
-  runApp(const MeditationApp(initialRoute: '/'));
+  debugPrint('>>> Running MeditationApp with initialRoute=$initialRoute...');
+  runApp(
+    MeditationApp(initialRoute: initialRoute, alarmSoundId: pendingSoundId),
+  );
 }
 
 /// Solicitar todos los permisos necesarios para la alarma
 Future<void> _requestPermissions() async {
-  // Permiso de notificaciones (Android 13+)
+  // 1. Permiso de notificaciones (Android 13+)
   final notificationStatus = await Permission.notification.status;
   if (!notificationStatus.isGranted) {
     final result = await Permission.notification.request();
     debugPrint('Notification permission: $result');
   }
 
-  // Permiso de alarmas exactas (Android 12+)
+  // 2. Permiso de alarmas exactas (Android 12+)
+  //    Necesario para NotificationService.zonedSchedule() con exactAllowWhileIdle
+  //    (recordatorios diarios). Abre la pantalla de Ajustes del sistema.
+  //    Nota: setAlarmClock() para la alarma principal NO lo necesita,
+  //    pero los recordatorios programados con flutter_local_notifications sí.
   final alarmStatus = await Permission.scheduleExactAlarm.status;
+  debugPrint('Exact alarm permission status: $alarmStatus');
   if (!alarmStatus.isGranted) {
     final result = await Permission.scheduleExactAlarm.request();
-    debugPrint('Exact alarm permission: $result');
+    debugPrint('Exact alarm permission after request: $result');
   }
+
+  // SYSTEM_ALERT_WINDOW: Se solicita desde el lado nativo (MainActivity)
+  // en onResume() para evitar interrumpir la inicialización de Flutter.
 }
 
 /// Callback cuando la alarma nativa se dispara
 void _onAlarmTriggered(String soundId) {
-  debugPrint('Alarm triggered with sound: $soundId');
+  debugPrint('=== _onAlarmTriggered START ===');
+  debugPrint('Sound ID: $soundId');
 
   // Persistir en historial (best-effort)
   try {
+    debugPrint('Persisting session to history...');
     unawaited(
       getIt<MeditationHistoryService>().completeActiveSession(
         soundIdFromAlarm: soundId,
       ),
     );
-  } catch (_) {
-    // Ignorar si el DI aún no está listo o hay error de persistencia
+    debugPrint('Session history persist initiated');
+  } catch (e) {
+    debugPrint('Error persisting session: $e');
   }
 
   // Notificar streak + resetear nudge de inactividad
   try {
+    debugPrint('Notifying session completed...');
     unawaited(getIt<NotificationService>().onSessionCompleted());
-  } catch (_) {
-    // best-effort
+    debugPrint('Session completed notification initiated');
+  } catch (e) {
+    debugPrint('Error notifying session completed: $e');
   }
 
   // Navegar a la pantalla de alarma
-  navigatorKey.currentState?.pushNamedAndRemoveUntil(
-    '/alarm',
-    (route) => false,
-    arguments: {'soundId': soundId},
+  debugPrint('navigatorKey.currentState: ${navigatorKey.currentState}');
+  debugPrint(
+    'navigatorKey.currentState is null: ${navigatorKey.currentState == null}',
   );
+
+  if (navigatorKey.currentState != null) {
+    debugPrint('>>> Navigating to /alarm with soundId=$soundId');
+    navigatorKey.currentState!.pushNamedAndRemoveUntil(
+      '/alarm',
+      (route) => false,
+      arguments: {'soundId': soundId},
+    );
+    debugPrint('>>> Navigation to /alarm completed');
+  } else {
+    debugPrint(
+      '>>> ERROR: navigatorKey.currentState is NULL! Cannot navigate to /alarm',
+    );
+    debugPrint(
+      '>>> This means the MaterialApp is not mounted or navigatorKey is not attached',
+    );
+  }
+  debugPrint('=== _onAlarmTriggered END ===');
 }
