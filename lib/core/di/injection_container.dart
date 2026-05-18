@@ -6,6 +6,7 @@ import '../services/native_alarm_service.dart';
 import '../services/audio_service.dart';
 import '../services/meditation_history_service.dart';
 import '../services/notification_service.dart';
+import '../services/review_service.dart';
 import '../../features/meditation/data/datasources/meditation_local_datasource.dart';
 import '../../features/meditation/data/repositories/meditation_repository_impl.dart';
 import '../../features/meditation/domain/repositories/meditation_repository.dart';
@@ -35,6 +36,9 @@ Future<void> initializeDependencies() async {
       getIt<SharedPreferences>(),
       getIt<MeditationHistoryService>(),
     ),
+  );
+  getIt.registerLazySingleton<ReviewService>(
+    () => ReviewService(getIt<SharedPreferences>()),
   );
 
   // Locale

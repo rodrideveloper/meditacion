@@ -45,4 +45,8 @@ class AppConstants {
 
   /// Horas de inactividad para nudge (48 h)
   static const int inactivityNudgeHours = 48;
+
+  /// Contador de sesiones completadas (para in_app_review)
+  static const String prefCompletedSessionsCount =
+      'completed_sessions_count';
 }

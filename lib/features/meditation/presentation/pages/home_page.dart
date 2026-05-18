@@ -6,6 +6,7 @@ import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/services/review_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../bloc/meditation_bloc.dart';
 import '../bloc/meditation_event.dart';
@@ -48,6 +49,9 @@ class _HomePageContent extends StatelessWidget {
                     ),
                   ),
                 );
+              } else if (state is MeditationCompleted) {
+                // Solicitar reseña en Play Store tras 3+ sesiones completadas
+                getIt<ReviewService>().onSessionCompleted();
               } else if (state is MeditationError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
