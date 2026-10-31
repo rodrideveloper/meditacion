@@ -35,9 +35,9 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
+    );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
@@ -124,7 +124,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
+              colors: [AppColors.background, AppColors.backgroundLight],
             ),
           ),
           child: SafeArea(
@@ -146,8 +146,8 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.primary.withValues(alpha: 0.8),
-                              AppColors.primaryDark.withValues(alpha: 0.4),
+                              AppColors.primary.withValues(alpha: 0.18),
+                              AppColors.primary.withValues(alpha: 0.08),
                               Colors.transparent,
                             ],
                             stops: const [0.0, 0.5, 1.0],
@@ -156,7 +156,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                         child: const Icon(
                           Icons.self_improvement,
                           size: 80,
-                          color: Colors.white,
+                          color: AppColors.primary,
                         ),
                       ),
                     );
@@ -206,8 +206,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32),
                         ),
-                        elevation: 8,
-                        shadowColor: AppColors.primary.withValues(alpha: 0.5),
+                        elevation: 0,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

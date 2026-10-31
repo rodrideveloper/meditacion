@@ -32,7 +32,7 @@ class TimerDisplay extends StatelessWidget {
               progress: progress,
               backgroundColor: AppColors.surface,
               progressColor: AppColors.primary,
-              strokeWidth: 12,
+              strokeWidth: 3,
             ),
           ),
           // Tiempo restante

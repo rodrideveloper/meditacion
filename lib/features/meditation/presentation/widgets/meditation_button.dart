@@ -23,25 +23,11 @@ class MeditationButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        width: 140,
-        height: 140,
+        width: 180,
+        height: 58,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isActive
-                ? [AppColors.accent, AppColors.accent.withValues(alpha: 0.7)]
-                : [AppColors.primary, AppColors.primaryDark],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (isActive ? AppColors.accent : AppColors.primary)
-                  .withValues(alpha: 0.4),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
+          color: isActive ? AppColors.error : AppColors.primary,
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Center(
           child: isLoading

@@ -99,7 +99,7 @@ class _MeditationPageContent extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: AppColors.textSecondary,
-                          fontStyle: FontStyle.italic,
+                          height: 1.5,
                         ),
                       ),
                     ),
