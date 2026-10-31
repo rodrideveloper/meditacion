@@ -52,6 +52,20 @@ class AppStrings {
   //  Home page
   // ────────────────────────────────────────────────────────────
   String get homeTitle => _t('Meditation', 'Meditación');
+  String get settingsTitle => _t('Make it yours', 'A tu manera');
+  String get homeGreeting => _t('This time is yours.', 'Este rato es tuyo.');
+  String get homeSubtitle => _t(
+    'A place to return to what you are doing.',
+    'Un lugar para volver a lo que estás haciendo.',
+  );
+  String get gentleReturn => _t(
+    'Getting distracted is part of it. Gently return.',
+    'Distraerte también es parte. Volvé con suavidad.',
+  );
+  String get alarmRescheduleError => _t(
+    'The alarm could not be restarted. Please try again.',
+    'No se pudo reprogramar la alarma. Inténtalo de nuevo.',
+  );
   String get viewHistory => _t('View history', 'Ver historial');
   String get vibration => _t('Vibration', 'Vibración');
   String get reminder => _t('Reminder', 'Recordatorio');

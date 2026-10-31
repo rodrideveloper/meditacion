@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/services/native_alarm_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/meditation_session.dart';
 import '../bloc/meditation_bloc.dart';
@@ -131,7 +132,7 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.pause_rounded,
             label: S.of(context).pause,
-            onPressed: () => timerBloc.add(const PauseTimerEvent()),
+            onPressed: () => _pauseSession(context, timerBloc, state),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
@@ -151,7 +152,7 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.play_arrow_rounded,
             label: S.of(context).resume,
-            onPressed: () => timerBloc.add(const ResumeTimerEvent()),
+            onPressed: () => _resumeSession(context, timerBloc, state),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
@@ -166,6 +167,37 @@ class _MeditationPageContent extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+
+  Future<void> _pauseSession(
+    BuildContext context,
+    TimerBloc timerBloc,
+    TimerState state,
+  ) async {
+    final alarm = getIt<NativeAlarmService>();
+    await alarm.cancelAlarm();
+    timerBloc.add(const PauseTimerEvent());
+  }
+
+  Future<void> _resumeSession(
+    BuildContext context,
+    TimerBloc timerBloc,
+    TimerState state,
+  ) async {
+    if (state is! TimerPaused) return;
+    final scheduled = await getIt<NativeAlarmService>().scheduleAlarm(
+      duration: state.remaining,
+      soundId: session.sound.id,
+    );
+    if (!scheduled) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).alarmRescheduleError)),
+        );
+      }
+      return;
+    }
+    timerBloc.add(const ResumeTimerEvent());
   }
 
   String _getMotivationalMessage(BuildContext context, TimerState state) {

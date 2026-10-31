@@ -111,7 +111,7 @@ class _HomePageContent extends StatelessWidget {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: AppColors.background,
-                  builder: (_) => BlocProvider.value(
+                  builder: (sheetContext) => BlocProvider.value(
                     value: bloc,
                     child: SafeArea(
                       child: SingleChildScrollView(
@@ -121,8 +121,10 @@ class _HomePageContent extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'A tu manera',
-                              style: Theme.of(context).textTheme.headlineSmall
+                              S.of(sheetContext).settingsTitle,
+                              style: Theme.of(sheetContext)
+                                  .textTheme
+                                  .headlineSmall
                                   ?.copyWith(fontFamily: 'serif'),
                             ),
                             const SizedBox(height: 20),
@@ -139,8 +141,9 @@ class _HomePageContent extends StatelessWidget {
                               alarmVolume: state.alarmVolume,
                               onVolumeChanged: (v) {
                                 bloc.add(ChangeVolumeEvent(v));
-                                if (audioService.isPlaying)
+                                if (audioService.isPlaying) {
                                   audioService.setVolume(v);
+                                }
                               },
                             ),
                             const SizedBox(height: 12),
@@ -151,7 +154,7 @@ class _HomePageContent extends StatelessWidget {
                             ),
                             TextButton.icon(
                               onPressed: () {
-                                Navigator.pop(context);
+                                Navigator.pop(sheetContext);
                                 Navigator.of(context).pushNamed('/privacy');
                               },
                               icon: const Icon(Icons.shield_outlined),
@@ -182,7 +185,7 @@ class _HomePageContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Este rato es tuyo.',
+                  S.of(context).homeGreeting,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontFamily: 'serif',
                     fontSize: 32,
@@ -191,7 +194,7 @@ class _HomePageContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Un lugar para volver a lo que estás haciendo.',
+                  S.of(context).homeSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -213,7 +216,7 @@ class _HomePageContent extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Distraerte también es parte. Volvé con suavidad.',
+            S.of(context).gentleReturn,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.textMuted,
