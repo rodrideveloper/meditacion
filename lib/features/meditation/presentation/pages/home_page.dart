@@ -95,40 +95,110 @@ class _HomePageContent extends StatelessWidget {
           // ── Top bar ──
           Row(
             children: [
-              const Icon(
-                Icons.self_improvement,
-                size: 28,
-                color: AppColors.primaryLight,
-              ),
-              const SizedBox(width: 10),
               Text(
-                S.of(context).homeTitle,
+                'volver',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  fontFamily: 'serif',
+                  fontSize: 25,
+                  letterSpacing: -1,
                 ),
               ),
               const Spacer(),
-              // Language toggle
-              _LanguageToggle(),
               IconButton(
-                tooltip: S.of(context).viewHistory,
-                icon: const Icon(Icons.history, color: AppColors.textSecondary),
-                onPressed: () => Navigator.of(context).pushNamed('/history'),
+                tooltip: 'Ajustes',
+                icon: const Icon(Icons.tune, color: AppColors.textSecondary),
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: AppColors.background,
+                  builder: (_) => BlocProvider.value(
+                    value: bloc,
+                    child: SafeArea(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'A tu manera',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontFamily: 'serif'),
+                            ),
+                            const SizedBox(height: 20),
+                            SoundSelector(
+                              selectedSound: state.selectedSound,
+                              onChanged: (sound) =>
+                                  bloc.add(ChangeSoundEvent(sound.id)),
+                              onPreview: (sound) =>
+                                  audioService.playPreview(sound),
+                              onStopPreview: () => audioService.stop(),
+                            ),
+                            const SizedBox(height: 12),
+                            _SettingsRow(
+                              alarmVolume: state.alarmVolume,
+                              onVolumeChanged: (v) {
+                                bloc.add(ChangeVolumeEvent(v));
+                                if (audioService.isPlaying)
+                                  audioService.setVolume(v);
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            const _ReminderRow(),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: _LanguageToggle(),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.of(context).pushNamed('/privacy');
+                              },
+                              icon: const Icon(Icons.shield_outlined),
+                              label: Text(S.of(context).privacyPolicy),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
               IconButton(
-                tooltip: S.of(context).privacyPolicy,
+                tooltip: S.of(context).viewHistory,
                 icon: const Icon(
-                  Icons.shield_outlined,
-                  size: 22,
+                  Icons.timeline,
                   color: AppColors.textSecondary,
                 ),
-                onPressed: () => Navigator.of(context).pushNamed('/privacy'),
+                onPressed: () => Navigator.of(context).pushNamed('/history'),
               ),
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 22),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Este rato es tuyo.',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontFamily: 'serif',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Un lugar para volver a lo que estás haciendo.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 26),
 
           // ── Duración ──
           DurationPicker(
@@ -136,43 +206,20 @@ class _HomePageContent extends StatelessWidget {
             onChanged: (minutes) => bloc.add(ChangeDurationEvent(minutes)),
           ),
 
-          const SizedBox(height: 20),
-
-          // ── Sonido ──
-          SoundSelector(
-            selectedSound: state.selectedSound,
-            onChanged: (sound) => bloc.add(ChangeSoundEvent(sound.id)),
-            onPreview: (sound) => audioService.playPreview(sound),
-            onStopPreview: () => audioService.stop(),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Volumen + Vibración ──
-          _SettingsRow(
-            alarmVolume: state.alarmVolume,
-            onVolumeChanged: (v) {
-              bloc.add(ChangeVolumeEvent(v));
-              // Ajustar en tiempo real si hay un preview sonando
-              if (audioService.isPlaying) {
-                audioService.setVolume(v);
-              }
-            },
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Recordatorio diario ──
-          const _ReminderRow(),
-
-          // ── Botón centrado en el espacio restante ──
           const Spacer(),
-
           MeditationButton(
             isActive: false,
             onPressed: () => bloc.add(const StartMeditationEvent()),
           ),
-
+          const SizedBox(height: 24),
+          Text(
+            'Distraerte también es parte. Volvé con suavidad.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.textMuted,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
           const Spacer(),
         ],
       ),
