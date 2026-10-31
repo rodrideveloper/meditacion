@@ -120,11 +120,14 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
       canPop: false,
       child: Scaffold(
         body: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppColors.background, AppColors.backgroundLight],
+              colors: [
+                context.palette.background,
+                context.palette.backgroundLight,
+              ],
             ),
           ),
           child: SafeArea(
@@ -146,17 +149,17 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.primary.withValues(alpha: 0.18),
-                              AppColors.primary.withValues(alpha: 0.08),
+                              context.palette.primary.withValues(alpha: 0.18),
+                              context.palette.primary.withValues(alpha: 0.08),
                               Colors.transparent,
                             ],
                             stops: const [0.0, 0.5, 1.0],
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.self_improvement,
                           size: 80,
-                          color: AppColors.primary,
+                          color: context.palette.primary,
                         ),
                       ),
                     );
@@ -183,7 +186,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                   child: Text(
                     S.of(context).meditationCompletedBody,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: context.palette.textSecondary,
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
@@ -201,7 +204,7 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                     child: ElevatedButton(
                       onPressed: _stopAlarm,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: context.palette.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32),
@@ -211,11 +214,11 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.stop_rounded, size: 28),
+                          Icon(Icons.stop_rounded, size: 28),
                           const SizedBox(width: 12),
                           Text(
                             S.of(context).stopAlarm,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1,

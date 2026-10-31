@@ -39,7 +39,7 @@ class SoundSelector extends StatelessWidget {
           child: Text(
             S.of(context).alarmSound,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textMuted,
+              color: context.palette.textMuted,
               letterSpacing: 1.5,
             ),
           ),
@@ -97,11 +97,11 @@ class _SoundChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.25)
-              : AppColors.surface,
+              ? context.palette.primary.withValues(alpha: 0.25)
+              : context.palette.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? context.palette.primary : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -111,7 +111,9 @@ class _SoundChip extends StatelessWidget {
             Icon(
               icon,
               size: 22,
-              color: isSelected ? AppColors.primaryLight : AppColors.textMuted,
+              color: isSelected
+                  ? context.palette.primaryLight
+                  : context.palette.textMuted,
             ),
             const SizedBox(height: 6),
             Text(
@@ -119,8 +121,8 @@ class _SoundChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 color: isSelected
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
+                    ? context.palette.textPrimary
+                    : context.palette.textSecondary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
               textAlign: TextAlign.center,

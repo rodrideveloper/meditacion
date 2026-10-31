@@ -53,6 +53,10 @@ class AppStrings {
   // ────────────────────────────────────────────────────────────
   String get homeTitle => _t('Meditation', 'Meditación');
   String get settingsTitle => _t('Make it yours', 'A tu manera');
+  String get appearanceLabel => _t('Appearance', 'Apariencia');
+  String get themeSystem => _t('System', 'Sistema');
+  String get themeLight => _t('Light', 'Claro');
+  String get themeDark => _t('Dark', 'Oscuro');
   String get homeGreeting => _t('This time is yours.', 'Este rato es tuyo.');
   String get homeSubtitle => _t(
     'A place to return to what you are doing.',

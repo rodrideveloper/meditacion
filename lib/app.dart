@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/di/injection_container.dart';
 import 'core/l10n/app_strings.dart';
 import 'core/l10n/locale_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/appearance_controller.dart';
 import 'features/meditation/presentation/pages/home_page.dart';
 import 'features/meditation/presentation/pages/alarm_fullscreen_page.dart';
 import 'features/meditation/presentation/pages/history_page.dart';
@@ -24,16 +26,19 @@ class MeditationApp extends StatefulWidget {
 
 class _MeditationAppState extends State<MeditationApp> {
   final LocaleProvider _localeProvider = getIt<LocaleProvider>();
+  final AppearanceController _appearance = getIt<AppearanceController>();
 
   @override
   void initState() {
     super.initState();
     _localeProvider.addListener(_onLocaleChanged);
+    _appearance.addListener(_onLocaleChanged);
   }
 
   @override
   void dispose() {
     _localeProvider.removeListener(_onLocaleChanged);
+    _appearance.removeListener(_onLocaleChanged);
     super.dispose();
   }
 
@@ -48,7 +53,20 @@ class _MeditationAppState extends State<MeditationApp> {
       child: MaterialApp(
         title: strings.appTitle,
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _appearance.mode,
+        builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                Theme.of(context).brightness == Brightness.dark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: Theme.of(context).brightness,
+          ),
+          child: child ?? const SizedBox.shrink(),
+        ),
         navigatorKey: navigatorKey,
         initialRoute: widget.initialRoute,
         onGenerateRoute: (settings) {

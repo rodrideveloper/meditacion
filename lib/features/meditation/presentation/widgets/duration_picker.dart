@@ -33,14 +33,14 @@ class DurationPicker extends StatelessWidget {
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 fontWeight: FontWeight.w200,
                 fontSize: 72,
-                color: AppColors.textPrimary,
+                color: context.palette.textPrimary,
               ),
             ),
             const SizedBox(width: 6),
             Text(
               S.of(context).minutesShort,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.textMuted,
+                color: context.palette.textMuted,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -50,7 +50,7 @@ class DurationPicker extends StatelessWidget {
         Text(
           S.of(context).durationLabel,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.textMuted,
+            color: context.palette.textMuted,
             letterSpacing: 1.5,
           ),
         ),
@@ -59,10 +59,10 @@ class DurationPicker extends StatelessWidget {
         // Slider
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            activeTrackColor: AppColors.primary,
-            inactiveTrackColor: AppColors.surface,
-            thumbColor: AppColors.primaryLight,
-            overlayColor: AppColors.primary.withValues(alpha: 0.2),
+            activeTrackColor: context.palette.primary,
+            inactiveTrackColor: context.palette.surface,
+            thumbColor: context.palette.primaryLight,
+            overlayColor: context.palette.primary.withValues(alpha: 0.2),
             trackHeight: 4,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
@@ -110,21 +110,35 @@ class _PresetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.surface,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: '$minutes ${S.of(context).minutesShort}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          '$minutes',
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textMuted,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? context.palette.primary
+                  : context.palette.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '$minutes',
+              style: TextStyle(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : context.palette.textMuted,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
           ),
         ),
       ),

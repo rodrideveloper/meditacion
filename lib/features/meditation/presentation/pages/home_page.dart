@@ -8,6 +8,7 @@ import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/services/review_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/appearance_controller.dart';
 import '../bloc/meditation_bloc.dart';
 import '../bloc/meditation_event.dart';
 import '../bloc/meditation_state.dart';
@@ -36,7 +37,7 @@ class _HomePageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        decoration: BoxDecoration(gradient: context.palette.backgroundGradient),
         child: SafeArea(
           child: BlocConsumer<MeditationBloc, MeditationState>(
             listener: (context, state) {
@@ -56,17 +57,17 @@ class _HomePageContent extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: context.palette.error,
                   ),
                 );
               }
             },
             builder: (context, state) {
               if (state is MeditationLoading) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
+                      context.palette.primary,
                     ),
                   ),
                 );
@@ -106,11 +107,11 @@ class _HomePageContent extends StatelessWidget {
               const Spacer(),
               IconButton(
                 tooltip: 'Ajustes',
-                icon: const Icon(Icons.tune, color: AppColors.textSecondary),
+                icon: Icon(Icons.tune, color: context.palette.textSecondary),
                 onPressed: () => showModalBottomSheet<void>(
                   context: context,
                   isScrollControlled: true,
-                  backgroundColor: AppColors.background,
+                  backgroundColor: context.palette.background,
                   builder: (sheetContext) => BlocProvider.value(
                     value: bloc,
                     child: BlocBuilder<MeditationBloc, MeditationState>(
@@ -157,6 +158,7 @@ class _HomePageContent extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 12),
                                 const _ReminderRow(),
+                                _AppearanceRow(),
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: _LanguageToggle(),
@@ -166,7 +168,7 @@ class _HomePageContent extends StatelessWidget {
                                     Navigator.pop(sheetContext);
                                     Navigator.of(context).pushNamed('/privacy');
                                   },
-                                  icon: const Icon(Icons.shield_outlined),
+                                  icon: Icon(Icons.shield_outlined),
                                   label: Text(S.of(context).privacyPolicy),
                                 ),
                               ],
@@ -180,9 +182,9 @@ class _HomePageContent extends StatelessWidget {
               ),
               IconButton(
                 tooltip: S.of(context).viewHistory,
-                icon: const Icon(
+                icon: Icon(
                   Icons.timeline,
-                  color: AppColors.textSecondary,
+                  color: context.palette.textSecondary,
                 ),
                 onPressed: () => Navigator.of(context).pushNamed('/history'),
               ),
@@ -230,7 +232,7 @@ class _HomePageContent extends StatelessWidget {
             S.of(context).gentleReturn,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textMuted,
+              color: context.palette.textMuted,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -259,7 +261,7 @@ class _SettingsRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -274,15 +276,17 @@ class _SettingsRow extends StatelessWidget {
                     ? Icons.volume_down
                     : Icons.volume_up,
                 size: 20,
-                color: AppColors.textSecondary,
+                color: context.palette.textSecondary,
               ),
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppColors.primary,
-                    inactiveTrackColor: AppColors.background,
-                    thumbColor: AppColors.primaryLight,
-                    overlayColor: AppColors.primary.withValues(alpha: 0.15),
+                    activeTrackColor: context.palette.primary,
+                    inactiveTrackColor: context.palette.background,
+                    thumbColor: context.palette.primaryLight,
+                    overlayColor: context.palette.primary.withValues(
+                      alpha: 0.15,
+                    ),
                     trackHeight: 3,
                     thumbShape: const RoundSliderThumbShape(
                       enabledThumbRadius: 7,
@@ -303,9 +307,9 @@ class _SettingsRow extends StatelessWidget {
                 width: 36,
                 child: Text(
                   '${(alarmVolume * 100).round()}%',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.palette.textMuted,
+                  ),
                   textAlign: TextAlign.end,
                 ),
               ),
@@ -367,9 +371,10 @@ class _ReminderRowState extends State<_ReminderRow> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary,
-              surface: AppColors.surface,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: context.palette.primary,
+              brightness: Theme.of(context).brightness,
+              surface: context.palette.surface,
             ),
           ),
           child: child!,
@@ -396,15 +401,15 @@ class _ReminderRowState extends State<_ReminderRow> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.notifications_active,
             size: 20,
-            color: AppColors.textSecondary,
+            color: context.palette.textSecondary,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -420,13 +425,13 @@ class _ReminderRowState extends State<_ReminderRow> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.5),
+                  color: context.palette.background.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   timeStr,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.primaryLight,
+                    color: context.palette.primaryLight,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -439,8 +444,8 @@ class _ReminderRowState extends State<_ReminderRow> {
               child: Switch(
                 value: _enabled,
                 onChanged: _toggle,
-                activeTrackColor: AppColors.primary,
-                activeThumbColor: AppColors.primaryLight,
+                activeTrackColor: context.palette.primary,
+                activeThumbColor: context.palette.primaryLight,
               ),
             ),
           ),
@@ -463,16 +468,50 @@ class _LanguageToggle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.palette.surface,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           isEnglish ? 'ES' : 'EN',
-          style: const TextStyle(
-            color: AppColors.primaryLight,
+          style: TextStyle(
+            color: context.palette.primaryLight,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppearanceRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final appearance = getIt<AppearanceController>();
+    return ListenableBuilder(
+      listenable: appearance,
+      builder: (context, _) => ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(S.of(context).appearanceLabel),
+        trailing: DropdownButton<ThemeMode>(
+          value: appearance.mode,
+          onChanged: (mode) {
+            if (mode != null) appearance.setMode(mode);
+          },
+          items: [
+            DropdownMenuItem(
+              value: ThemeMode.system,
+              child: Text(S.of(context).themeSystem),
+            ),
+            DropdownMenuItem(
+              value: ThemeMode.light,
+              child: Text(S.of(context).themeLight),
+            ),
+            DropdownMenuItem(
+              value: ThemeMode.dark,
+              child: Text(S.of(context).themeDark),
+            ),
+          ],
         ),
       ),
     );

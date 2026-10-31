@@ -44,8 +44,8 @@ class _MeditationPageContent extends StatelessWidget {
       },
       child: Scaffold(
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.backgroundGradient,
+          decoration: BoxDecoration(
+            gradient: context.palette.backgroundGradient,
           ),
           child: SafeArea(
             child: BlocConsumer<TimerBloc, TimerState>(
@@ -69,7 +69,7 @@ class _MeditationPageContent extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.close),
+                            icon: Icon(Icons.close),
                             onPressed: () => _showCancelDialog(context),
                           ),
                           Text(
@@ -99,7 +99,7 @@ class _MeditationPageContent extends StatelessWidget {
                         _getMotivationalMessage(context, state),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: context.palette.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -139,7 +139,7 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.stop_rounded,
             label: S.of(context).stopAction,
-            color: AppColors.accent,
+            color: context.palette.accent,
             onPressed: () => _showCancelDialog(context),
           ),
         ],
@@ -159,7 +159,7 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.stop_rounded,
             label: S.of(context).stopAction,
-            color: AppColors.accent,
+            color: context.palette.accent,
             onPressed: () => _showCancelDialog(context),
           ),
         ],
@@ -223,7 +223,7 @@ class _MeditationPageContent extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.palette.surface,
         title: Text(s.cancelMeditation),
         content: Text(s.cancelMeditationBody),
         actions: [
@@ -238,7 +238,9 @@ class _MeditationPageContent extends StatelessWidget {
               context.read<TimerBloc>().add(const StopTimerEvent());
               Navigator.of(context).pop();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+            style: TextButton.styleFrom(
+              foregroundColor: context.palette.accent,
+            ),
             child: Text(s.cancel),
           ),
         ],
@@ -262,7 +264,7 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = color ?? AppColors.primary;
+    final buttonColor = color ?? context.palette.primary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -284,7 +286,7 @@ class _ControlButton extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
         ),
       ],
     );

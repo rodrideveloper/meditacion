@@ -30,8 +30,8 @@ class TimerDisplay extends StatelessWidget {
             size: const Size(280, 280),
             painter: _TimerCirclePainter(
               progress: progress,
-              backgroundColor: AppColors.surface,
-              progressColor: AppColors.primary,
+              backgroundColor: context.palette.surface,
+              progressColor: context.palette.primary,
               strokeWidth: 3,
             ),
           ),
@@ -49,9 +49,9 @@ class TimerDisplay extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 S.of(context).remaining,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: context.palette.textMuted,
+                ),
               ),
             ],
           ),
