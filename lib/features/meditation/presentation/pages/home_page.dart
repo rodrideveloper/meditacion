@@ -113,56 +113,67 @@ class _HomePageContent extends StatelessWidget {
                   backgroundColor: AppColors.background,
                   builder: (sheetContext) => BlocProvider.value(
                     value: bloc,
-                    child: SafeArea(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              S.of(sheetContext).settingsTitle,
-                              style: Theme.of(sheetContext)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(fontFamily: 'serif'),
+                    child: BlocBuilder<MeditationBloc, MeditationState>(
+                      builder: (sheetContext, settingsState) {
+                        if (settingsState is! MeditationReady) {
+                          return const SizedBox.shrink();
+                        }
+                        return SafeArea(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  S.of(sheetContext).settingsTitle,
+                                  style: Theme.of(sheetContext)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(fontFamily: 'serif'),
+                                ),
+                                const SizedBox(height: 20),
+                                SoundSelector(
+                                  selectedSound: settingsState.selectedSound,
+                                  onChanged: (sound) =>
+                                      bloc.add(ChangeSoundEvent(sound.id)),
+                                  onPreview: (sound) =>
+                                      audioService.playPreview(sound),
+                                  onStopPreview: () => audioService.stop(),
+                                ),
+                                const SizedBox(height: 12),
+                                _SettingsRow(
+                                  alarmVolume: settingsState.alarmVolume,
+                                  vibrationEnabled:
+                                      settingsState.vibrationEnabled,
+                                  onVibrationChanged: (_) =>
+                                      bloc.add(const ToggleVibrationEvent()),
+                                  onVolumeChanged: (v) {
+                                    bloc.add(ChangeVolumeEvent(v));
+                                    if (audioService.isPlaying) {
+                                      audioService.setVolume(v);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                const _ReminderRow(),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: _LanguageToggle(),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(sheetContext);
+                                    Navigator.of(context).pushNamed('/privacy');
+                                  },
+                                  icon: const Icon(Icons.shield_outlined),
+                                  label: Text(S.of(context).privacyPolicy),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 20),
-                            SoundSelector(
-                              selectedSound: state.selectedSound,
-                              onChanged: (sound) =>
-                                  bloc.add(ChangeSoundEvent(sound.id)),
-                              onPreview: (sound) =>
-                                  audioService.playPreview(sound),
-                              onStopPreview: () => audioService.stop(),
-                            ),
-                            const SizedBox(height: 12),
-                            _SettingsRow(
-                              alarmVolume: state.alarmVolume,
-                              onVolumeChanged: (v) {
-                                bloc.add(ChangeVolumeEvent(v));
-                                if (audioService.isPlaying) {
-                                  audioService.setVolume(v);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            const _ReminderRow(),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: _LanguageToggle(),
-                            ),
-                            TextButton.icon(
-                              onPressed: () {
-                                Navigator.pop(sheetContext);
-                                Navigator.of(context).pushNamed('/privacy');
-                              },
-                              icon: const Icon(Icons.shield_outlined),
-                              label: Text(S.of(context).privacyPolicy),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -232,10 +243,14 @@ class _HomePageContent extends StatelessWidget {
 
 class _SettingsRow extends StatelessWidget {
   final double alarmVolume;
+  final bool vibrationEnabled;
+  final ValueChanged<bool> onVibrationChanged;
   final ValueChanged<double> onVolumeChanged;
 
   const _SettingsRow({
     required this.alarmVolume,
+    required this.vibrationEnabled,
+    required this.onVibrationChanged,
     required this.onVolumeChanged,
   });
 
@@ -295,6 +310,12 @@ class _SettingsRow extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(S.of(context).vibration),
+            value: vibrationEnabled,
+            onChanged: onVibrationChanged,
           ),
         ],
       ),
