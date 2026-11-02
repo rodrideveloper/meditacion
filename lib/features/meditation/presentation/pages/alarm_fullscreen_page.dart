@@ -9,6 +9,7 @@ import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/services/audio_service.dart';
 import '../../../../core/services/native_alarm_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/attention_thread.dart';
 
 /// Página de alarma full-screen que aparece sobre el lock screen
 class AlarmFullScreenPage extends StatefulWidget {
@@ -18,10 +19,7 @@ class AlarmFullScreenPage extends StatefulWidget {
   State<AlarmFullScreenPage> createState() => _AlarmFullScreenPageState();
 }
 
-class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _pulseAnimation;
+class _AlarmFullScreenPageState extends State<AlarmFullScreenPage> {
   final AudioService _audioService = getIt<AudioService>();
   final NativeAlarmService _nativeAlarmService = getIt<NativeAlarmService>();
   String? _soundId;
@@ -30,16 +28,6 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
   void initState() {
     super.initState();
     debugPrint('=== AlarmFullScreenPage.initState START ===');
-
-    // Configurar animación de pulso
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
 
     // Mantener pantalla encendida
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -108,7 +96,6 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
 
   @override
   void dispose() {
-    _animationController.dispose();
     _audioService.stop();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
@@ -120,118 +107,87 @@ class _AlarmFullScreenPageState extends State<AlarmFullScreenPage>
       canPop: false,
       child: Scaffold(
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
-            ),
-          ),
+          color: context.palette.background,
           child: SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(flex: 2),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+                  children: [
+                    const AttentionThread(height: 96),
 
-                // Icono animado
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.8),
-                              AppColors.primaryDark.withValues(alpha: 0.4),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 0.5, 1.0],
+                    const SizedBox(height: 32),
+
+                    // Título
+                    Text(
+                      S.of(context).meditationCompleted,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: context.palette.textPrimary,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                        child: const Icon(
-                          Icons.self_improvement,
-                          size: 80,
-                          color: Colors.white,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 48),
-
-                // Título
-                Text(
-                  S.of(context).meditationCompleted,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Subtítulo
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text(
-                    S.of(context).meditationCompletedBody,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
-                      height: 1.5,
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
 
-                const Spacer(flex: 2),
+                    const SizedBox(height: 16),
 
-                // Botón de detener
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 64,
-                    child: ElevatedButton(
-                      onPressed: _stopAlarm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
+                    // Subtítulo
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        S.of(context).meditationCompletedBody,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: context.palette.textSecondary,
+                          height: 1.5,
                         ),
-                        elevation: 8,
-                        shadowColor: AppColors.primary.withValues(alpha: 0.5),
+                        textAlign: TextAlign.center,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.stop_rounded, size: 28),
-                          const SizedBox(width: 12),
-                          Text(
-                            S.of(context).stopAlarm,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1,
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Botón de detener
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 64,
+                        child: ElevatedButton(
+                          onPressed: _stopAlarm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.palette.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32),
                             ),
+                            elevation: 0,
                           ),
-                        ],
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.stop_rounded, size: 28),
+                              const SizedBox(width: 12),
+                              Text(
+                                S.of(context).stopAlarm,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 32),
+                  ],
                 ),
-
-                const Spacer(),
-
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
           ),
         ),

@@ -5,6 +5,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/services/meditation_history_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/attention_thread.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -28,12 +29,12 @@ class _HistoryPageState extends State<HistoryPage> {
         actions: [
           IconButton(
             tooltip: S.of(context).clearHistory,
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline),
             onPressed: () async {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: context.palette.surface,
                   title: Text(S.of(context).clearHistory),
                   content: Text(S.of(context).clearHistoryConfirm),
                   actions: [
@@ -59,7 +60,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        color: context.palette.background,
         child: SafeArea(
           child: Builder(
             builder: (_) {
@@ -67,14 +68,31 @@ class _HistoryPageState extends State<HistoryPage> {
 
               if (entries.isEmpty) {
                 return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      S.of(context).noSessionsYet,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AttentionThread(height: 72),
+                          const SizedBox(height: 24),
+                          Text(
+                            S.of(context).noSessionsYet,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            S.of(context).journeyEmptyBody,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: context.palette.textSecondary,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                 );
@@ -90,7 +108,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     padding: const EdgeInsets.symmetric(
@@ -103,12 +121,14 @@ class _HistoryPageState extends State<HistoryPage> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
+                            color: context.palette.primary.withValues(
+                              alpha: 0.15,
+                            ),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.self_improvement,
-                            color: AppColors.primaryLight,
+                            color: context.palette.primaryLight,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -119,13 +139,17 @@ class _HistoryPageState extends State<HistoryPage> {
                               Text(
                                 '${e.durationMinutes} min · $soundName',
                                 style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(color: AppColors.textPrimary),
+                                    ?.copyWith(
+                                      color: context.palette.textPrimary,
+                                    ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '${dateFmt.format(e.completedAt)} · ${timeFmt.format(e.completedAt)}',
                                 style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: AppColors.textSecondary),
+                                    ?.copyWith(
+                                      color: context.palette.textSecondary,
+                                    ),
                               ),
                             ],
                           ),
@@ -135,7 +159,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           e.vibrationEnabled
                               ? Icons.vibration
                               : Icons.vibration_outlined,
-                          color: AppColors.textMuted,
+                          color: context.palette.textMuted,
                           size: 18,
                         ),
                       ],

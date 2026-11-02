@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/l10n/app_strings.dart';
+import '../../../../core/services/native_alarm_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/attention_thread.dart';
 import '../../domain/entities/meditation_session.dart';
 import '../bloc/meditation_bloc.dart';
 import '../bloc/meditation_event.dart';
@@ -43,9 +45,7 @@ class _MeditationPageContent extends StatelessWidget {
       },
       child: Scaffold(
         body: Container(
-          decoration: const BoxDecoration(
-            gradient: AppColors.backgroundGradient,
-          ),
+          color: context.palette.background,
           child: SafeArea(
             child: BlocConsumer<TimerBloc, TimerState>(
               listener: (context, state) {
@@ -59,7 +59,11 @@ class _MeditationPageContent extends StatelessWidget {
                 }
               },
               builder: (context, state) {
-                return Column(
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   children: [
                     // Header
                     Padding(
@@ -68,7 +72,7 @@ class _MeditationPageContent extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.close),
+                            icon: Icon(Icons.close),
                             onPressed: () => _showCancelDialog(context),
                           ),
                           Text(
@@ -80,7 +84,15 @@ class _MeditationPageContent extends StatelessWidget {
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 12),
+
+                    // El hilo da presencia visual sin convertir la sesión en
+                    // una señal de progreso o rendimiento.
+                    AttentionThread(
+                      height: 52,
+                      semanticLabel: S.of(context).threadDescription,
+                    ),
+                    const SizedBox(height: 24),
 
                     // Timer circular
                     TimerDisplay(
@@ -89,27 +101,29 @@ class _MeditationPageContent extends StatelessWidget {
                       progress: state.progress,
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
 
                     // Mensaje motivacional
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        _getMotivationalMessage(context, state),
+                        state is TimerPaused
+                            ? S.of(context).motivPaused
+                            : S.of(context).sessionGentlePrompt,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontStyle: FontStyle.italic,
+                          color: context.palette.textSecondary,
+                          height: 1.5,
                         ),
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 32),
 
                     // Controles
                     _buildControls(context, state),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 28),
                   ],
                 );
               },
@@ -131,14 +145,14 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.pause_rounded,
             label: S.of(context).pause,
-            onPressed: () => timerBloc.add(const PauseTimerEvent()),
+            onPressed: () => _pauseSession(context, timerBloc, state),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
           _ControlButton(
             icon: Icons.stop_rounded,
             label: S.of(context).stopAction,
-            color: AppColors.accent,
+            color: context.palette.accent,
             onPressed: () => _showCancelDialog(context),
           ),
         ],
@@ -151,14 +165,14 @@ class _MeditationPageContent extends StatelessWidget {
           _ControlButton(
             icon: Icons.play_arrow_rounded,
             label: S.of(context).resume,
-            onPressed: () => timerBloc.add(const ResumeTimerEvent()),
+            onPressed: () => _resumeSession(context, timerBloc, state),
           ),
           const SizedBox(width: 24),
           // Botón de cancelar
           _ControlButton(
             icon: Icons.stop_rounded,
             label: S.of(context).stopAction,
-            color: AppColors.accent,
+            color: context.palette.accent,
             onPressed: () => _showCancelDialog(context),
           ),
         ],
@@ -168,22 +182,36 @@ class _MeditationPageContent extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  String _getMotivationalMessage(BuildContext context, TimerState state) {
-    final s = S.of(context);
-    if (state is TimerPaused) {
-      return s.motivPaused;
-    }
+  Future<void> _pauseSession(
+    BuildContext context,
+    TimerBloc timerBloc,
+    TimerState state,
+  ) async {
+    final alarm = getIt<NativeAlarmService>();
+    await alarm.cancelAlarm();
+    timerBloc.add(const PauseTimerEvent());
+  }
 
-    final progress = state.progress;
-    if (progress < 0.25) {
-      return s.motivEarly;
-    } else if (progress < 0.5) {
-      return s.motivMid;
-    } else if (progress < 0.75) {
-      return s.motivLate;
-    } else {
-      return s.motivFinal;
+  Future<void> _resumeSession(
+    BuildContext context,
+    TimerBloc timerBloc,
+    TimerState state,
+  ) async {
+    if (state is! TimerPaused) return;
+    final scheduled = await getIt<NativeAlarmService>().scheduleAlarm(
+      duration: state.remaining,
+      soundId: session.sound.id,
+      vibrationEnabled: session.vibrationEnabled,
+    );
+    if (!scheduled) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(S.of(context).alarmRescheduleError)),
+        );
+      }
+      return;
     }
+    timerBloc.add(const ResumeTimerEvent());
   }
 
   void _showCancelDialog(BuildContext context) {
@@ -191,7 +219,7 @@ class _MeditationPageContent extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.palette.surface,
         title: Text(s.cancelMeditation),
         content: Text(s.cancelMeditationBody),
         actions: [
@@ -206,7 +234,9 @@ class _MeditationPageContent extends StatelessWidget {
               context.read<TimerBloc>().add(const StopTimerEvent());
               Navigator.of(context).pop();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+            style: TextButton.styleFrom(
+              foregroundColor: context.palette.accent,
+            ),
             child: Text(s.cancel),
           ),
         ],
@@ -230,7 +260,7 @@ class _ControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = color ?? AppColors.primary;
+    final buttonColor = color ?? context.palette.primary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -252,7 +282,7 @@ class _ControlButton extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
         ),
       ],
     );

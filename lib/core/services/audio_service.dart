@@ -121,18 +121,6 @@ class AudioService {
     }
   }
 
-  /// Sube el volumen gradualmente de 0 a [targetVolume] en ~5 segundos
-  Future<void> _fadeIn(double targetVolume) async {
-    const steps = 25;
-    const stepDuration = Duration(milliseconds: 200); // 25 × 200ms = 5s
-    for (var i = 1; i <= steps; i++) {
-      if (!_isPlaying || _player == null) return;
-      final volume = (i / steps) * targetVolume;
-      await _player!.setVolume(volume);
-      await Future.delayed(stepDuration);
-    }
-  }
-
   /// Detener reproducción
   Future<void> stop() async {
     try {

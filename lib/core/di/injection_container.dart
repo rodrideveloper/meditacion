@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/locale_provider.dart';
+import '../theme/appearance_controller.dart';
 import '../services/native_alarm_service.dart';
 import '../services/audio_service.dart';
 import '../services/meditation_history_service.dart';
@@ -44,6 +45,9 @@ Future<void> initializeDependencies() async {
   // Locale
   getIt.registerSingleton<LocaleProvider>(
     LocaleProvider(getIt<SharedPreferences>()),
+  );
+  getIt.registerSingleton<AppearanceController>(
+    AppearanceController(getIt<SharedPreferences>()),
   );
 
   // Datasources

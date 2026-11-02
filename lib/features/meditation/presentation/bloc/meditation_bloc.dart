@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/sound_constants.dart';
 import '../../domain/entities/meditation_session.dart';
+import '../../domain/entities/meditation_settings.dart';
 import '../../domain/usecases/start_meditation.dart';
 import '../../domain/usecases/cancel_meditation.dart';
 import '../../domain/usecases/get_saved_settings.dart';
@@ -17,6 +20,7 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
   final SaveSettings saveSettings;
 
   MeditationSession? _currentSession;
+  Timer? _settingsSaveTimer;
 
   MeditationBloc({
     required this.startMeditation,
@@ -37,6 +41,23 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
 
   /// Obtener sesión actual
   MeditationSession? get currentSession => _currentSession;
+
+  /// Asegura que las preferencias pendientes queden guardadas antes de salir
+  /// de Ajustes o de suspender la aplicación.
+  Future<bool> persistSettingsNow() async {
+    _settingsSaveTimer?.cancel();
+    final current = state;
+    if (current is! MeditationReady) return true;
+    final result = await saveSettings(
+      MeditationSettings(
+        lastDurationMinutes: current.durationMinutes,
+        selectedSoundId: current.selectedSound.id,
+        vibrationEnabled: current.vibrationEnabled,
+        alarmVolume: current.alarmVolume,
+      ),
+    );
+    return result.isRight();
+  }
 
   Future<void> _onLoadSettings(
     LoadSettingsEvent event,
@@ -77,7 +98,9 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
   ) {
     final currentState = state;
     if (currentState is MeditationReady) {
-      emit(currentState.copyWith(durationMinutes: event.minutes));
+      final updated = currentState.copyWith(durationMinutes: event.minutes);
+      emit(updated);
+      _saveSettingsSoon(updated);
     }
   }
 
@@ -86,7 +109,9 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
     if (currentState is MeditationReady) {
       final sound = MeditationSound.getById(event.soundId);
       if (sound != null) {
-        emit(currentState.copyWith(selectedSound: sound));
+        final updated = currentState.copyWith(selectedSound: sound);
+        emit(updated);
+        _saveSettingsSoon(updated);
       }
     }
   }
@@ -97,17 +122,42 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
   ) {
     final currentState = state;
     if (currentState is MeditationReady) {
-      emit(
-        currentState.copyWith(vibrationEnabled: !currentState.vibrationEnabled),
+      final updated = currentState.copyWith(
+        vibrationEnabled: !currentState.vibrationEnabled,
       );
+      emit(updated);
+      _saveSettingsSoon(updated);
     }
   }
 
   void _onChangeVolume(ChangeVolumeEvent event, Emitter<MeditationState> emit) {
     final currentState = state;
     if (currentState is MeditationReady) {
-      emit(currentState.copyWith(alarmVolume: event.volume));
+      final updated = currentState.copyWith(alarmVolume: event.volume);
+      emit(updated);
+      _saveSettingsSoon(updated);
     }
+  }
+
+  void _saveSettingsSoon(MeditationReady state) {
+    _settingsSaveTimer?.cancel();
+    _settingsSaveTimer = Timer(const Duration(milliseconds: 350), () {
+      if (isClosed) return;
+      saveSettings(
+        MeditationSettings(
+          lastDurationMinutes: state.durationMinutes,
+          selectedSoundId: state.selectedSound.id,
+          vibrationEnabled: state.vibrationEnabled,
+          alarmVolume: state.alarmVolume,
+        ),
+      );
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _settingsSaveTimer?.cancel();
+    return super.close();
   }
 
   Future<void> _onStartMeditation(

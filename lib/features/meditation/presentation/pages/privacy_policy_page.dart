@@ -18,7 +18,7 @@ class PrivacyPolicyPage extends StatelessWidget {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        color: context.palette.background,
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
@@ -47,9 +47,9 @@ class PrivacyPolicyPage extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 s.privacyLastUpdated,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: context.palette.textMuted,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -71,7 +71,7 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: AppColors.primaryLight,
+          color: context.palette.primaryLight,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -88,7 +88,7 @@ class _Body extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: AppColors.textSecondary,
+        color: context.palette.textSecondary,
         height: 1.6,
       ),
     );

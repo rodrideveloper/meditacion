@@ -76,11 +76,13 @@ class NativeAlarmService {
   Future<bool> scheduleAlarm({
     required Duration duration,
     required String soundId,
+    bool vibrationEnabled = true,
   }) async {
     try {
       final result = await _methodChannel.invokeMethod<bool>('scheduleAlarm', {
         'delayMillis': duration.inMilliseconds,
         'soundId': soundId,
+        'vibrationEnabled': vibrationEnabled,
       });
 
       if (result == true) {
