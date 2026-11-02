@@ -35,6 +35,8 @@ dependencies:
   in_app_review: ^2.0.10
   flutter_local_notifications: ^20.0.0
   flutter_timezone: ^5.0.1
+  timezone: ^0.10.1
+  flutter_native_splash: ^2.4.5
 
 dev_dependencies:
   flutter_test:
@@ -43,32 +45,46 @@ dev_dependencies:
   bloc_test: ^9.1.7
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.3
-  flutter_native_splash: ^2.4.5
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png"
+  image_path: "assets/icon/volver-icon.png"
   remove_alpha_ios: true
-  adaptive_icon_background: "#1A1A2E"
-  adaptive_icon_foreground: "assets/icon/icon.png"
+  adaptive_icon_background: "#F4F0E7"
+  adaptive_icon_foreground: "assets/icon/volver-icon.png"
   min_sdk_android: 24
 
 flutter_native_splash:
-  color: "#1A1A2E"
-  image: "assets/icon/icon.png"
-  image_dark: "assets/icon/icon.png"
-  color_dark: "#1A1A2E"
+  color: "#F4F0E7"
+  image: "assets/icon/volver-icon.png"
+  image_dark: "assets/icon/volver-icon-dark.png"
+  color_dark: "#201D1A"
   android_12:
-    color: "#1A1A2E"
-    icon_background_color: "#1A1A2E"
-    image: "assets/icon/icon.png"
-    color_dark: "#1A1A2E"
-    icon_background_color_dark: "#1A1A2E"
-    image_dark: "assets/icon/icon.png"
+    color: "#F4F0E7"
+    icon_background_color: "#F4F0E7"
+    image: "assets/icon/volver-icon.png"
+    color_dark: "#201D1A"
+    icon_background_color_dark: "#201D1A"
+    image_dark: "assets/icon/volver-icon-dark.png"
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/sounds/
+    - assets/fonts/
+
+  fonts:
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Newsreader-Medium.ttf
+          weight: 500
+    - family: SourceSans3
+      fonts:
+        - asset: assets/fonts/SourceSans3-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SourceSans3-Medium.ttf
+          weight: 500

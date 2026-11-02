@@ -57,6 +57,25 @@ class AppStrings {
   String get themeSystem => _t('System', 'Sistema');
   String get themeLight => _t('Light', 'Claro');
   String get themeDark => _t('Dark', 'Oscuro');
+  String get practiceTab => _t('Practice', 'Practicar');
+  String get journeyTab => _t('My journey', 'Mi recorrido');
+  String get threadDescription =>
+      _t('A line that wanders and returns.', 'Un hilo que se desvía y vuelve.');
+  String get customDuration => _t('Another duration', 'Otra duración');
+  String get chooseDuration => _t('Choose a duration', 'Elegí una duración');
+  String get alarmVolume => _t('Alarm volume', 'Volumen de la alarma');
+  String get languageLabel => _t('Language', 'Idioma');
+  String get settingsSaveError => _t(
+    'Your settings could not be saved. Please try again.',
+    'No se pudieron guardar tus ajustes. Volvé a intentarlo.',
+  );
+  String get reminderTime => _t('Reminder time', 'Horario del recordatorio');
+  String get startMeditation => _t('Begin practice', 'Empezar práctica');
+  String get soundSummary => _t('Sound', 'Sonido');
+  String get sessionGentlePrompt => _t(
+    'When you notice your attention has wandered, gently return.',
+    'Cuando notes que tu atención se fue, volvé con suavidad.',
+  );
   String get homeGreeting => _t('This time is yours.', 'Este rato es tuyo.');
   String get homeSubtitle => _t(
     'A place to return to what you are doing.',
@@ -65,6 +84,10 @@ class AppStrings {
   String get gentleReturn => _t(
     'Getting distracted is part of it. Gently return.',
     'Distraerte también es parte. Volvé con suavidad.',
+  );
+  String get journeyEmptyBody => _t(
+    'Each time you return, your practice leaves a quiet trace here.',
+    'Cada vez que volvés, tu práctica deja una huella tranquila acá.',
   );
   String get alarmRescheduleError => _t(
     'The alarm could not be restarted. Please try again.',
@@ -118,8 +141,8 @@ class AppStrings {
 
   // Motivational messages
   String get motivPaused => _t(
-    'Take a moment. When you\'re ready, continue your practice.',
-    'Toma un momento. Cuando estés listo, continúa tu práctica.',
+    'You can return whenever you\'re ready.',
+    'Podés volver cuando quieras.',
   );
   String get motivEarly => _t(
     'Breathe deeply. Let go of the day\'s tensions.',
@@ -154,10 +177,10 @@ class AppStrings {
   String get meditationCompleted =>
       _t('🧘 Meditation Completed', '🧘 Meditación Completada');
   String get meditationCompletedBody => _t(
-    'Your meditation session is over.\nTake a moment to return to the present.',
-    'Tu sesión de meditación ha terminado.\nToma un momento para volver al presente.',
+    'Thank you for making this time for yourself.',
+    'Gracias por hacerte este espacio.',
   );
-  String get stopAlarm => _t('STOP ALARM', 'DETENER ALARMA');
+  String get stopAlarm => _t('Silence bell', 'Silenciar campana');
   String get orSwipeToStop => _t('or swipe to stop', 'o desliza para detener');
   String get swipe => _t('Swipe →', 'Desliza →');
 
@@ -170,35 +193,35 @@ class AppStrings {
       _t('This action cannot be undone.', 'Esta acción no se puede deshacer.');
   String get delete => _t('Delete', 'Borrar');
   String get noSessionsYet =>
-      _t('No sessions recorded yet.', 'Aún no hay sesiones registradas.');
+      _t('Your practice starts here.', 'Tu práctica empieza acá.');
 
   // ────────────────────────────────────────────────────────────
   //  Notifications
   // ────────────────────────────────────────────────────────────
   String get notifChannelName => _t('Reminders', 'Recordatorios');
   String get notifChannelDesc => _t(
-    'Meditation reminders and achievements',
-    'Recordatorios y logros de meditación',
+    'Meditation reminders you can change at any time',
+    'Recordatorios de meditación que podés cambiar cuando quieras',
   );
 
-  String get notifDailyTitle => _t('🧘 Time to meditate', '🧘 Hora de meditar');
+  String get notifDailyTitle => _t('A moment for yourself', 'Un rato para vos');
   String get notifDailyBody => _t(
-    'Take a few minutes to connect with yourself.',
-    'Tómate unos minutos para conectar contigo.',
+    'If now is a good time, your practice is here.',
+    'Si este es un buen momento, tu práctica está acá.',
   );
 
   String notifStreakTitle(int streak) =>
-      _t('🔥 $streak-day streak', '🔥 Racha de $streak días');
+      _t('$streak days of making time', '$streak días haciéndote un espacio');
   String notifStreakBody(int streak) => _t(
-    'Keep it up! You\'ve meditated $streak days in a row.',
-    '¡Sigue así! Llevas $streak días meditando seguidos.',
+    'You made time to practice on $streak days in a row.',
+    'Te hiciste un espacio para practicar $streak días seguidos.',
   );
 
   String get notifInactivityTitle =>
-      _t('💤 We miss you', '💤 Te echamos de menos');
+      _t('Your practice is still here', 'Tu práctica sigue acá');
   String get notifInactivityBody => _t(
-    'It\'s been a while since you meditated. Shall we start again?',
-    'Hace tiempo que no meditas. ¿Retomamos?',
+    'Come back whenever it feels right for you.',
+    'Volvé cuando sientas que es un buen momento.',
   );
 
   // ────────────────────────────────────────────────────────────

@@ -19,10 +19,12 @@ class _GetSettings extends GetSavedSettings {
 }
 
 class _SaveSettings extends SaveSettings {
-  _SaveSettings() : super(_UnusedRepository());
+  _SaveSettings({this.fail = false}) : super(_UnusedRepository());
+  final bool fail;
   MeditationSettings? saved;
   @override
   Future<Either<Failure, void>> call(MeditationSettings settings) async {
+    if (fail) return const Left(StorageFailure('storage unavailable'));
     saved = settings;
     return const Right(null);
   }
@@ -59,6 +61,40 @@ void main() {
 
     expect(save.saved?.lastDurationMinutes, 25);
     expect(save.saved?.alarmVolume, 0.35);
+    await bloc.close();
+  });
+
+  test('flushes the latest preferences before leaving settings', () async {
+    final save = _SaveSettings();
+    final bloc = MeditationBloc(
+      startMeditation: _Start(),
+      cancelMeditation: _Cancel(),
+      getSavedSettings: _GetSettings(),
+      saveSettings: save,
+    );
+    bloc.add(const LoadSettingsEvent());
+    await bloc.stream.firstWhere((state) => state is MeditationReady);
+    bloc.add(const ChangeDurationEvent(120));
+    await bloc.stream.firstWhere(
+      (state) => state is MeditationReady && state.durationMinutes == 120,
+    );
+
+    expect(await bloc.persistSettingsNow(), isTrue);
+    expect(save.saved?.lastDurationMinutes, 120);
+    await bloc.close();
+  });
+
+  test('reports when flushing preferences fails', () async {
+    final bloc = MeditationBloc(
+      startMeditation: _Start(),
+      cancelMeditation: _Cancel(),
+      getSavedSettings: _GetSettings(),
+      saveSettings: _SaveSettings(fail: true),
+    );
+    bloc.add(const LoadSettingsEvent());
+    await bloc.stream.firstWhere((state) => state is MeditationReady);
+
+    expect(await bloc.persistSettingsNow(), isFalse);
     await bloc.close();
   });
 }

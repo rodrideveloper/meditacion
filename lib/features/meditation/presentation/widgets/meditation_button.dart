@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Botón principal para iniciar/detener meditación
+/// CTA principal de práctica: una sola acción, con un objetivo táctil amplio.
 class MeditationButton extends StatelessWidget {
   final bool isActive;
   final VoidCallback onPressed;
@@ -18,50 +18,38 @@ class MeditationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = isActive ? S.of(context).stop : S.of(context).startMeditation;
+    final foreground = Theme.of(context).colorScheme.onPrimary;
+
     return Semantics(
       button: true,
-      label: isActive ? S.of(context).stop : S.of(context).start,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(14),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            width: 180,
-            height: 58,
-            decoration: BoxDecoration(
-              color: isActive ? context.palette.error : context.palette.primary,
+      label: label,
+      child: SizedBox(
+        width: 240,
+        height: 56,
+        child: FilledButton.icon(
+          onPressed: isLoading ? null : onPressed,
+          icon: isLoading
+              ? SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: foreground,
+                  ),
+                )
+              : Icon(isActive ? Icons.stop_rounded : Icons.play_arrow_rounded),
+          label: Text(label),
+          style: FilledButton.styleFrom(
+            backgroundColor: isActive
+                ? context.palette.error
+                : context.palette.primary,
+            foregroundColor: foreground,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Center(
-              child: isLoading
-                  ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isActive
-                              ? Icons.stop_rounded
-                              : Icons.play_arrow_rounded,
-                          size: 52,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isActive ? S.of(context).stop : S.of(context).start,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ],
-                    ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),

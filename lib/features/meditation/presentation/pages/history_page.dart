@@ -5,6 +5,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/services/meditation_history_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/attention_thread.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -59,7 +60,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: BoxDecoration(gradient: context.palette.backgroundGradient),
+        color: context.palette.background,
         child: SafeArea(
           child: Builder(
             builder: (_) {
@@ -67,14 +68,31 @@ class _HistoryPageState extends State<HistoryPage> {
 
               if (entries.isEmpty) {
                 return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      S.of(context).noSessionsYet,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: context.palette.textSecondary,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AttentionThread(height: 72),
+                          const SizedBox(height: 24),
+                          Text(
+                            S.of(context).noSessionsYet,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            S.of(context).journeyEmptyBody,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: context.palette.textSecondary,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                 );

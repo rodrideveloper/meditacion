@@ -42,6 +42,23 @@ class MeditationBloc extends Bloc<MeditationEvent, MeditationState> {
   /// Obtener sesión actual
   MeditationSession? get currentSession => _currentSession;
 
+  /// Asegura que las preferencias pendientes queden guardadas antes de salir
+  /// de Ajustes o de suspender la aplicación.
+  Future<bool> persistSettingsNow() async {
+    _settingsSaveTimer?.cancel();
+    final current = state;
+    if (current is! MeditationReady) return true;
+    final result = await saveSettings(
+      MeditationSettings(
+        lastDurationMinutes: current.durationMinutes,
+        selectedSoundId: current.selectedSound.id,
+        vibrationEnabled: current.vibrationEnabled,
+        alarmVolume: current.alarmVolume,
+      ),
+    );
+    return result.isRight();
+  }
+
   Future<void> _onLoadSettings(
     LoadSettingsEvent event,
     Emitter<MeditationState> emit,

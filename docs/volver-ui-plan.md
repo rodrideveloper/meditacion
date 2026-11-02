@@ -1,6 +1,17 @@
 # Plan de refactorización integral de UI — Volver
 
-Estado: propuesta lista para implementar. Este PR contiene planificación y referencia visual; la implementación se realizará en etapas posteriores.
+Estado: implementación del rediseño terminada en este PR. Las comprobaciones automatizadas pasan; quedan pendientes las validaciones que exigen un dispositivo real y espacio libre para completar builds nativos.
+
+## Resultado de implementación — 2 de noviembre de 2026
+
+- Sistema visual Volver implementado con temas claro/oscuro/sistema persistidos, paleta como `ThemeExtension`, Newsreader + Source Sans 3 locales con licencias OFL y el hilo reutilizable de marca.
+- Home reducido a Practicar / Mi recorrido, con presets conservados y selector de 1–120 minutos; Ajustes es una pantalla separada con sonido/preescucha, volumen, vibración, recordatorio, idioma, apariencia y privacidad. Se agregó `/settings`.
+- Sesión y cierre migrados al tema; la pausa cancela la alarma nativa y la reanudación la programa con el tiempo restante. El estado pausado usa el mensaje «Podés volver cuando quieras»; se quitó el pulso infinito y el cierre ofrece «Silenciar campana».
+- Historial conserva sus datos y permite borrar con confirmación; vacío y lectura de privacidad se integraron al sistema visual. Los recordatorios usan copy sin presión.
+- Ícono y splash claro/oscuro generados para Android e iOS desde los recursos incluidos.
+- `flutter analyze`: sin incidencias. `flutter test --concurrency=1`: 17 pruebas pasan, incluyendo tema y persistencia, guardado antes de salir de Ajustes y su error, presets y duración personalizada, layout estrecho con texto ampliado, hilo accesible, historial/borrado y canal Flutter de la alarma.
+- El build Android debug no terminó porque el disco del equipo se quedó sin espacio durante Gradle (117 MB libres); se retiraron 226 MB de artefactos de build recién creados. Build iOS y pruebas de alarma con pantalla bloqueada no se pudieron ejecutar en este entorno.
+- No se tomó evidencia visual en dispositivo ni se verificaron TalkBack/VoiceOver, segundo plano, bloqueo y arranque en frío. Estos puntos siguen marcados como validación manual pendiente; los tests Flutter no sustituyen esas pruebas.
 
 ![Referencia visual de la pantalla principal de Volver](../design/volver-home-reference.png)
 
@@ -92,7 +103,7 @@ Los permisos y alertas que pertenecen al sistema operativo conservan su UI nativ
 
 ## Secuencia de implementación
 
-Cada etapa tendrá una rama `codex/volver-ui-*` y un PR revisable contra `main`, después de integrar su dependencia. No publicar pantallas a medio migrar como experiencia final.
+El trabajo se concentró en la rama `codex/volver-ui-plan` y el PR existente, según la indicación de completar allí el refactor. Las etapas siguientes se usaron como orden de implementación, no como PRs separados.
 
 ### Etapa 1 — Base visual y componentes (`codex/volver-ui-foundation`)
 

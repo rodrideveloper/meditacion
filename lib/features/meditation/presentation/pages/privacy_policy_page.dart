@@ -18,7 +18,7 @@ class PrivacyPolicyPage extends StatelessWidget {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: BoxDecoration(gradient: context.palette.backgroundGradient),
+        color: context.palette.background,
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),

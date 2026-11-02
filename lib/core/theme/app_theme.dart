@@ -19,6 +19,7 @@ class AppTheme {
     );
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'SourceSans3',
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: palette.background,
@@ -42,15 +43,15 @@ class AppTheme {
         ),
         headlineLarge: TextStyle(
           color: palette.textPrimary,
+          fontFamily: 'Newsreader',
           fontSize: 32,
           fontWeight: FontWeight.w500,
-          fontFamily: 'serif',
         ),
         headlineMedium: TextStyle(
           color: palette.textPrimary,
+          fontFamily: 'Newsreader',
           fontSize: 24,
           fontWeight: FontWeight.w500,
-          fontFamily: 'serif',
         ),
         titleLarge: TextStyle(
           color: palette.textPrimary,
@@ -77,6 +78,7 @@ class AppTheme {
         ),
       ),
       iconTheme: IconThemeData(color: palette.textPrimary, size: 24),
+      extensions: <ThemeExtension<dynamic>>[palette],
       sliderTheme: SliderThemeData(
         activeTrackColor: palette.primary,
         inactiveTrackColor: palette.primary.withValues(alpha: .3),

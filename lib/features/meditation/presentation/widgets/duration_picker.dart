@@ -56,30 +56,11 @@ class DurationPicker extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Slider
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            activeTrackColor: context.palette.primary,
-            inactiveTrackColor: context.palette.surface,
-            thumbColor: context.palette.primaryLight,
-            overlayColor: context.palette.primary.withValues(alpha: 0.2),
-            trackHeight: 4,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
-          ),
-          child: Slider(
-            value: selectedMinutes.toDouble(),
-            min: minMinutes.toDouble(),
-            max: maxMinutes.toDouble(),
-            divisions: maxMinutes - minMinutes,
-            onChanged: (value) => onChanged(value.round()),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // Presets rápidos — solo los más comunes
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        // Presets rápidos; el selector completo aparece bajo demanda.
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 6,
           children: [5, 10, 15, 20, 30, 60].map((minutes) {
             final isSelected = selectedMinutes == minutes;
             return Padding(
@@ -92,9 +73,72 @@ class DurationPicker extends StatelessWidget {
             );
           }).toList(),
         ),
+        TextButton(
+          onPressed: () async {
+            final value = await showDialog<int>(
+              context: context,
+              builder: (_) => _CustomDurationDialog(
+                initial: selectedMinutes,
+                min: minMinutes,
+                max: maxMinutes,
+              ),
+            );
+            if (value != null) onChanged(value);
+          },
+          child: Text(S.of(context).customDuration),
+        ),
       ],
     );
   }
+}
+
+class _CustomDurationDialog extends StatefulWidget {
+  const _CustomDurationDialog({
+    required this.initial,
+    required this.min,
+    required this.max,
+  });
+  final int initial, min, max;
+  @override
+  State<_CustomDurationDialog> createState() => _CustomDurationDialogState();
+}
+
+class _CustomDurationDialogState extends State<_CustomDurationDialog> {
+  late int value = widget.initial;
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(S.of(context).chooseDuration),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$value ${S.of(context).minutesShort}',
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        Slider(
+          key: const ValueKey('custom-duration-slider'),
+          value: value.toDouble(),
+          min: widget.min.toDouble(),
+          max: widget.max.toDouble(),
+          divisions: widget.max - widget.min,
+          semanticFormatterCallback: (v) =>
+              '${v.round()} ${S.of(context).minutesShort}',
+          onChanged: (v) => setState(() => value = v.round()),
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: Text(S.of(context).cancel),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, value),
+        child: Text(S.of(context).continueAction),
+      ),
+    ],
+  );
 }
 
 class _PresetChip extends StatelessWidget {

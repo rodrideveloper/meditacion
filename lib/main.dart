@@ -56,7 +56,7 @@ void main() async {
   String? pendingSoundId;
   final pendingResult = await nativeAlarmService.checkPendingAlarm();
   if (pendingResult != null) {
-    debugPrint('>>> Cold-start alarm detected! soundId=${pendingResult}');
+    debugPrint('>>> Cold-start alarm detected! soundId=$pendingResult');
     initialRoute = '/alarm';
     pendingSoundId = pendingResult;
 

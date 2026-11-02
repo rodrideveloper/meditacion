@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/di/injection_container.dart';
 import 'core/l10n/app_strings.dart';
@@ -10,6 +11,9 @@ import 'features/meditation/presentation/pages/home_page.dart';
 import 'features/meditation/presentation/pages/alarm_fullscreen_page.dart';
 import 'features/meditation/presentation/pages/history_page.dart';
 import 'features/meditation/presentation/pages/privacy_policy_page.dart';
+import 'features/meditation/presentation/pages/settings_page.dart';
+import 'features/meditation/presentation/bloc/meditation_bloc.dart';
+import 'features/meditation/presentation/bloc/meditation_event.dart';
 
 /// Clave global del Navigator para navegación desde callbacks
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -98,6 +102,15 @@ class _MeditationAppState extends State<MeditationApp> {
               return MaterialPageRoute(
                 settings: settings,
                 builder: (context) => const PrivacyPolicyPage(),
+              );
+            case '/settings':
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) => BlocProvider(
+                  create: (_) =>
+                      getIt<MeditationBloc>()..add(const LoadSettingsEvent()),
+                  child: const SettingsPage(),
+                ),
               );
             default:
               return MaterialPageRoute(

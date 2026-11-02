@@ -97,17 +97,7 @@ class _TimerCirclePainter extends CustomPainter {
 
     // Progreso del círculo
     final progressPaint = Paint()
-      ..shader = SweepGradient(
-        startAngle: -math.pi / 2,
-        endAngle: 3 * math.pi / 2,
-        colors: [
-          progressColor.withValues(alpha: 0.5),
-          progressColor,
-          progressColor.withValues(alpha: 0.8),
-        ],
-        stops: const [0.0, 0.5, 1.0],
-        transform: const GradientRotation(-math.pi / 2),
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..color = progressColor
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -128,7 +118,7 @@ class _TimerCirclePainter extends CustomPainter {
       final indicatorY = center.dy + radius * math.sin(indicatorAngle);
 
       final indicatorPaint = Paint()
-        ..color = Colors.white
+        ..color = progressColor
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(
@@ -141,6 +131,9 @@ class _TimerCirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TimerCirclePainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.progressColor != progressColor ||
+        oldDelegate.strokeWidth != strokeWidth;
   }
 }

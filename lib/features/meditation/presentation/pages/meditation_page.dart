@@ -5,6 +5,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/services/native_alarm_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/attention_thread.dart';
 import '../../domain/entities/meditation_session.dart';
 import '../bloc/meditation_bloc.dart';
 import '../bloc/meditation_event.dart';
@@ -44,9 +45,7 @@ class _MeditationPageContent extends StatelessWidget {
       },
       child: Scaffold(
         body: Container(
-          decoration: BoxDecoration(
-            gradient: context.palette.backgroundGradient,
-          ),
+          color: context.palette.background,
           child: SafeArea(
             child: BlocConsumer<TimerBloc, TimerState>(
               listener: (context, state) {
@@ -60,7 +59,11 @@ class _MeditationPageContent extends StatelessWidget {
                 }
               },
               builder: (context, state) {
-                return Column(
+                return ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   children: [
                     // Header
                     Padding(
@@ -81,7 +84,15 @@ class _MeditationPageContent extends StatelessWidget {
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 12),
+
+                    // El hilo da presencia visual sin convertir la sesión en
+                    // una señal de progreso o rendimiento.
+                    AttentionThread(
+                      height: 52,
+                      semanticLabel: S.of(context).threadDescription,
+                    ),
+                    const SizedBox(height: 24),
 
                     // Timer circular
                     TimerDisplay(
@@ -90,13 +101,15 @@ class _MeditationPageContent extends StatelessWidget {
                       progress: state.progress,
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
 
                     // Mensaje motivacional
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
-                        _getMotivationalMessage(context, state),
+                        state is TimerPaused
+                            ? S.of(context).motivPaused
+                            : S.of(context).sessionGentlePrompt,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: context.palette.textSecondary,
@@ -105,12 +118,12 @@ class _MeditationPageContent extends StatelessWidget {
                       ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(height: 32),
 
                     // Controles
                     _buildControls(context, state),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 28),
                   ],
                 );
               },
@@ -198,24 +211,6 @@ class _MeditationPageContent extends StatelessWidget {
       return;
     }
     timerBloc.add(const ResumeTimerEvent());
-  }
-
-  String _getMotivationalMessage(BuildContext context, TimerState state) {
-    final s = S.of(context);
-    if (state is TimerPaused) {
-      return s.motivPaused;
-    }
-
-    final progress = state.progress;
-    if (progress < 0.25) {
-      return s.motivEarly;
-    } else if (progress < 0.5) {
-      return s.motivMid;
-    } else if (progress < 0.75) {
-      return s.motivLate;
-    } else {
-      return s.motivFinal;
-    }
   }
 
   void _showCancelDialog(BuildContext context) {
