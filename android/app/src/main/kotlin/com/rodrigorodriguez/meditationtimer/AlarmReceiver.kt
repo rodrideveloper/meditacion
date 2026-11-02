@@ -30,8 +30,11 @@ class AlarmReceiver : BroadcastReceiver() {
         const val TAG = "AlarmReceiver"
         const val ACTION_ALARM_TRIGGERED = "com.rodrigorodriguez.meditationtimer.ALARM_TRIGGERED"
         const val EXTRA_SOUND_ID = "sound_id"
+        const val EXTRA_VIBRATION_ENABLED = "vibration_enabled"
         const val NOTIFICATION_ID = 2001
-        const val ALARM_CHANNEL_ID = "meditation_alarm_v4"
+        const val ALARM_CHANNEL_VIBRATING_ID = "meditation_alarm_vibrating_v5"
+        const val ALARM_CHANNEL_SILENT_ID = "meditation_alarm_silent_v5"
+        private val VIBRATION_PATTERN = longArrayOf(0, 500, 200, 500, 200, 500)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -44,15 +47,14 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         val soundId = intent.getStringExtra(EXTRA_SOUND_ID) ?: "angelical"
-        Log.d(TAG, "Sound ID: $soundId")
-
-        // Vibrar brevemente como feedback inmediato
-        triggerVibration(context)
+        val vibrationEnabled = intent.getBooleanExtra(EXTRA_VIBRATION_ENABLED, true)
+        Log.d(TAG, "Sound ID: $soundId, vibration enabled: $vibrationEnabled")
 
         // Intent para abrir / traer la Activity
         val launchIntent = Intent(context, MainActivity::class.java).apply {
             action = ACTION_ALARM_TRIGGERED
             putExtra(EXTRA_SOUND_ID, soundId)
+            putExtra(EXTRA_VIBRATION_ENABLED, vibrationEnabled)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -65,19 +67,21 @@ class AlarmReceiver : BroadcastReceiver() {
             // ── Pantalla ENCENDIDA → startActivity() directo ──
             Log.d(TAG, ">>> Screen ON → startActivity()")
             try {
+                // Sin notificación en este flujo: dar feedback con el vibrador.
+                if (vibrationEnabled) triggerVibration(context)
                 context.startActivity(launchIntent)
                 Log.d(TAG, ">>> startActivity() OK")
             } catch (e: Exception) {
                 Log.e(TAG, ">>> startActivity() FAILED: ${e.message}", e)
                 // Fallback: notificación con fullScreenIntent
                 Log.d(TAG, ">>> Fallback → posting fullScreenIntent notification")
-                postAlarmNotification(context, soundId, launchIntent)
+                postAlarmNotification(context, vibrationEnabled, launchIntent)
             }
         } else {
             // ── Pantalla APAGADA / BLOQUEADA → fullScreenIntent ──
             Log.d(TAG, ">>> Screen OFF → posting fullScreenIntent notification")
             acquireScreenWakeLock(context)
-            postAlarmNotification(context, soundId, launchIntent)
+            postAlarmNotification(context, vibrationEnabled, launchIntent)
         }
 
         Log.d(TAG, "=== AlarmReceiver.onReceive END ===")
@@ -107,8 +111,13 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun postAlarmNotification(context: Context, soundId: String, launchIntent: Intent) {
-        ensureNotificationChannel(context)
+    private fun postAlarmNotification(
+        context: Context,
+        vibrationEnabled: Boolean,
+        launchIntent: Intent
+    ) {
+        ensureNotificationChannels(context)
+        val channelId = if (vibrationEnabled) ALARM_CHANNEL_VIBRATING_ID else ALARM_CHANNEL_SILENT_ID
 
         val fullScreenPI = PendingIntent.getActivity(
             context, NOTIFICATION_ID, launchIntent,
@@ -121,7 +130,7 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, ALARM_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("🧘 Meditación Completada")
             .setContentText("Tu sesión de meditación ha terminado. Toca para abrir.")
@@ -133,9 +142,9 @@ class AlarmReceiver : BroadcastReceiver() {
             .setFullScreenIntent(fullScreenPI, true)
             .setContentIntent(fullScreenPI)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Descartar", dismissPI)
-            .setVibrate(longArrayOf(0, 500, 200, 500, 200, 500))
+            .setVibrate(if (vibrationEnabled) VIBRATION_PATTERN else null)
             // Sin sonido nativo — Flutter maneja el audio
-            .setSilent(false)
+            .setSilent(!vibrationEnabled)
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -143,7 +152,7 @@ class AlarmReceiver : BroadcastReceiver() {
         Log.d(TAG, "Alarm notification posted (ID=$NOTIFICATION_ID)")
     }
 
-    private fun ensureNotificationChannel(context: Context) {
+    private fun ensureNotificationChannels(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -154,21 +163,26 @@ class AlarmReceiver : BroadcastReceiver() {
                 "meditation_fg_service_channel"
             ).forEach { nm.deleteNotificationChannel(it) }
 
-            val ch = NotificationChannel(
-                ALARM_CHANNEL_ID,
-                "Alarma de Meditación",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Alarma cuando la meditación termina"
-                setBypassDnd(true)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 500)
-                enableLights(true)
-                setSound(null, null) // sin sonido nativo — Flutter maneja audio
+            listOf(
+                ALARM_CHANNEL_VIBRATING_ID to true,
+                ALARM_CHANNEL_SILENT_ID to false
+            ).forEach { (channelId, shouldVibrate) ->
+                val channel = NotificationChannel(
+                    channelId,
+                    "Alarma de Meditación",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Alarma cuando la meditación termina"
+                    setBypassDnd(true)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                    enableVibration(shouldVibrate)
+                    if (shouldVibrate) vibrationPattern = VIBRATION_PATTERN
+                    enableLights(true)
+                    setSound(null, null) // sin sonido nativo — Flutter maneja el audio
+                }
+                nm.createNotificationChannel(channel)
+                Log.d(TAG, "Notification channel created: $channelId")
             }
-            nm.createNotificationChannel(ch)
-            Log.d(TAG, "Notification channel created: $ALARM_CHANNEL_ID")
         }
     }
 

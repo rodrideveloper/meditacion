@@ -224,8 +224,9 @@ class MainActivity : FlutterActivity() {
                         // Flutter envía int, convertir a Long
                         val delayMillis = (call.argument<Number>("delayMillis") ?: 0).toLong()
                         val soundId = call.argument<String>("soundId") ?: "angelical"
-                        Log.d(TAG, "scheduleAlarm called: delayMillis=$delayMillis, soundId=$soundId")
-                        val success = alarmScheduler.scheduleAlarmFromNow(delayMillis, soundId)
+                        val vibrationEnabled = call.argument<Boolean>("vibrationEnabled") ?: true
+                        Log.d(TAG, "scheduleAlarm called: delayMillis=$delayMillis, soundId=$soundId, vibrationEnabled=$vibrationEnabled")
+                        val success = alarmScheduler.scheduleAlarmFromNow(delayMillis, soundId, vibrationEnabled)
                         result.success(success)
                     }
                     "cancelAlarm" -> {

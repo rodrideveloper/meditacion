@@ -201,6 +201,7 @@ class _MeditationPageContent extends StatelessWidget {
     final scheduled = await getIt<NativeAlarmService>().scheduleAlarm(
       duration: state.remaining,
       soundId: session.sound.id,
+      vibrationEnabled: session.vibrationEnabled,
     );
     if (!scheduled) {
       if (context.mounted) {

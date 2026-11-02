@@ -7,14 +7,16 @@ Estado: implementación del rediseño terminada en este PR. Las comprobaciones a
 - Sistema visual Volver implementado con temas claro/oscuro/sistema persistidos, paleta como `ThemeExtension`, Newsreader + Source Sans 3 locales con licencias OFL y el hilo reutilizable de marca.
 - Home reducido a Practicar / Mi recorrido, con presets conservados y selector de 1–120 minutos; Ajustes es una pantalla separada con sonido/preescucha, volumen, vibración, recordatorio, idioma, apariencia y privacidad. Se agregó `/settings`.
 - Sesión y cierre migrados al tema; la pausa cancela la alarma nativa y la reanudación la programa con el tiempo restante. El estado pausado usa el mensaje «Podés volver cuando quieras»; se quitó el pulso infinito y el cierre ofrece «Silenciar campana».
+- La pantalla de alarma reutiliza esta UI y conserva el sonido y volumen elegidos. La preferencia de vibración ahora llega al `AlarmManager`, se conserva al reanudar y selecciona el canal de notificación con o sin vibración en Android.
 - Historial conserva sus datos y permite borrar con confirmación; vacío y lectura de privacidad se integraron al sistema visual. Los recordatorios usan copy sin presión.
 - Ícono y splash claro/oscuro generados para Android e iOS desde los recursos incluidos.
-- `flutter analyze`: sin incidencias. `flutter test --concurrency=1`: 17 pruebas pasan, incluyendo tema y persistencia, guardado antes de salir de Ajustes y su error, presets y duración personalizada, layout estrecho con texto ampliado, hilo accesible, historial/borrado y canal Flutter de la alarma.
+- `flutter analyze`: sin incidencias. `flutter test --concurrency=1`: 17 pruebas pasan, incluyendo que la alarma recibe la preferencia de vibración. También cubren tema y persistencia, guardado antes de salir de Ajustes y su error, presets y duración personalizada, layout estrecho con texto ampliado, hilo accesible e historial/borrado.
+- `flutter build apk --debug`: completado localmente. El primer intento encontró un daemon de Gradle inactivo que retenía un lock; se detuvo ese daemon y el build pasó.
 - `flutter build ios --debug --no-codesign`: completado; generó `build/ios/iphoneos/Runner.app`. Xcode también firmó, instaló y lanzó la app en un iPhone 12 conectado por Wi‑Fi.
 - La sesión `flutter run` no pudo adjuntar el depurador: tras permitir Red local en iOS, Flutter agotó el tiempo esperando el servicio VM y reportó fallo mDNS. El proceso Runner fue visible en la lista de procesos de iOS, pero no se obtuvo captura ni se comprobaron interacciones en pantalla.
-- El build Android debug sigue pendiente. El primer intento llenó el disco y corrompió el índice compartido de Gradle; el reintento falló por ese índice y dejó 116 MB libres. Se conservaron las cachés compartidas y se retiraron artefactos de compilación creados durante los intentos.
-- Se agregó `.github/workflows/flutter.yml` para ejecutar análisis/tests y builds Android/iOS en runners limpios; falta que GitHub ejecute el workflow tras el siguiente push a esta rama.
-- No se verificaron en dispositivo TalkBack/VoiceOver, audio, segundo plano, bloqueo ni arranque en frío. Estos puntos siguen marcados como validación manual pendiente; los tests Flutter no sustituyen esas pruebas.
+- El workflow `.github/workflows/flutter.yml` ejecuta análisis/tests y builds Android/iOS en runners limpios. El último run del commit anterior pasó análisis/tests e iOS y falló Android; el build Android local ya pasó tras detener el daemon que retenía el lock. El nuevo commit debe volver a correr CI.
+- El canal de alarmas nativas solo está implementado en Android; el build iOS pasa, pero iniciar una sesión con alarma en iOS no está soportado por ese canal. La app se describe como Android en el README.
+- No se verificaron en dispositivo TalkBack/VoiceOver, audio, vibración, segundo plano, bloqueo ni arranque en frío. Estos puntos siguen marcados como validación manual pendiente; los tests Flutter no sustituyen esas pruebas.
 
 ![Referencia visual de la pantalla principal de Volver](../design/volver-home-reference.png)
 

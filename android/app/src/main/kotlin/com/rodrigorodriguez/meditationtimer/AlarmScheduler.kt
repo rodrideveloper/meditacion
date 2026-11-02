@@ -39,11 +39,16 @@ class AlarmScheduler(private val context: Context) {
      * @param soundId ID del sonido a reproducir
      * @return true si la alarma fue programada exitosamente
      */
-    fun scheduleAlarm(triggerAtMillis: Long, soundId: String): Boolean {
+    fun scheduleAlarm(
+        triggerAtMillis: Long,
+        soundId: String,
+        vibrationEnabled: Boolean
+    ): Boolean {
         return try {
             val intent = Intent(context, AlarmReceiver::class.java).apply {
                 action = AlarmReceiver.ACTION_ALARM_TRIGGERED
                 putExtra(AlarmReceiver.EXTRA_SOUND_ID, soundId)
+                putExtra(AlarmReceiver.EXTRA_VIBRATION_ENABLED, vibrationEnabled)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
@@ -81,9 +86,13 @@ class AlarmScheduler(private val context: Context) {
      * @param soundId ID del sonido a reproducir
      * @return true si la alarma fue programada exitosamente
      */
-    fun scheduleAlarmFromNow(delayMillis: Long, soundId: String): Boolean {
+    fun scheduleAlarmFromNow(
+        delayMillis: Long,
+        soundId: String,
+        vibrationEnabled: Boolean
+    ): Boolean {
         val triggerAtMillis = System.currentTimeMillis() + delayMillis
-        return scheduleAlarm(triggerAtMillis, soundId)
+        return scheduleAlarm(triggerAtMillis, soundId, vibrationEnabled)
     }
     
     /**

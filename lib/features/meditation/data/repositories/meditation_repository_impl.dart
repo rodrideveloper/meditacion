@@ -44,6 +44,7 @@ class MeditationRepositoryImpl implements MeditationRepository {
       final scheduled = await nativeAlarmService.scheduleAlarm(
         duration: duration,
         soundId: soundId,
+        vibrationEnabled: vibrationEnabled,
       );
 
       if (!scheduled) {
