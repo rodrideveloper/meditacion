@@ -10,8 +10,11 @@ Estado: implementación del rediseño terminada en este PR. Las comprobaciones a
 - Historial conserva sus datos y permite borrar con confirmación; vacío y lectura de privacidad se integraron al sistema visual. Los recordatorios usan copy sin presión.
 - Ícono y splash claro/oscuro generados para Android e iOS desde los recursos incluidos.
 - `flutter analyze`: sin incidencias. `flutter test --concurrency=1`: 17 pruebas pasan, incluyendo tema y persistencia, guardado antes de salir de Ajustes y su error, presets y duración personalizada, layout estrecho con texto ampliado, hilo accesible, historial/borrado y canal Flutter de la alarma.
-- El build Android debug no terminó porque el disco del equipo se quedó sin espacio durante Gradle (117 MB libres); se retiraron 226 MB de artefactos de build recién creados. Build iOS y pruebas de alarma con pantalla bloqueada no se pudieron ejecutar en este entorno.
-- No se tomó evidencia visual en dispositivo ni se verificaron TalkBack/VoiceOver, segundo plano, bloqueo y arranque en frío. Estos puntos siguen marcados como validación manual pendiente; los tests Flutter no sustituyen esas pruebas.
+- `flutter build ios --debug --no-codesign`: completado; generó `build/ios/iphoneos/Runner.app`. Xcode también firmó, instaló y lanzó la app en un iPhone 12 conectado por Wi‑Fi.
+- La sesión `flutter run` no pudo adjuntar el depurador: tras permitir Red local en iOS, Flutter agotó el tiempo esperando el servicio VM y reportó fallo mDNS. El proceso Runner fue visible en la lista de procesos de iOS, pero no se obtuvo captura ni se comprobaron interacciones en pantalla.
+- El build Android debug sigue pendiente. El primer intento llenó el disco y corrompió el índice compartido de Gradle; el reintento falló por ese índice y dejó 116 MB libres. Se conservaron las cachés compartidas y se retiraron artefactos de compilación creados durante los intentos.
+- Se agregó `.github/workflows/flutter.yml` para ejecutar análisis/tests y builds Android/iOS en runners limpios; falta que GitHub ejecute el workflow tras el siguiente push a esta rama.
+- No se verificaron en dispositivo TalkBack/VoiceOver, audio, segundo plano, bloqueo ni arranque en frío. Estos puntos siguen marcados como validación manual pendiente; los tests Flutter no sustituyen esas pruebas.
 
 ![Referencia visual de la pantalla principal de Volver](../design/volver-home-reference.png)
 
